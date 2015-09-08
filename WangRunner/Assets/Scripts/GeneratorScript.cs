@@ -27,9 +27,8 @@ public class GeneratorScript : MonoBehaviour {
 		float farthestRoomEndX = 0;
 
 		foreach (var room in currentLevels) {
-			float roomWidth = 0.0f * room.transform.Find ("SmallGround").localScale.x;
+			float roomWidth = room.transform.Find ("floor").localScale.x;
 			float roomStartX = room.transform.position.x - (roomWidth * 0.5f);
-			Debug.Log( string.Format("roomStartX: {0} screenWidth: {1}", roomStartX, screenWidthInPoints) );
 			float roomEndX = roomStartX + roomWidth;
 
 			if( roomStartX > addRoomX )
@@ -53,7 +52,7 @@ public class GeneratorScript : MonoBehaviour {
 	void AddRoom( float farthestRoomEndX ){
 		int randomRoomIndex = Random.Range (0, availableLevels.Length);
 		GameObject room = (GameObject)Instantiate (availableLevels [randomRoomIndex]);
-		float roomWidth = room.transform.Find ("SmallGround").localScale.x;
+		float roomWidth = room.transform.Find ("floor").localScale.x;
 		float roomCenter = farthestRoomEndX + (roomWidth * 0.5f);
 
 		room.transform.position = new Vector3 (roomCenter, 0, 0);
