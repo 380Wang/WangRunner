@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		rb = GetComponent<Rigidbody2D> ();
+		clickDelay = 0.05f;
 		//ground = GetComponent<BoxCollider2D> ();
 
 		/*GameObject[] groundStuff = GameObject.FindGameObjectsWithTag ("Ground");
@@ -52,12 +53,12 @@ public class PlayerController : MonoBehaviour {
 
 		newVelocity.x = movementSpeed;
 		rb.velocity = newVelocity;
-
+		
 		clickDelay -= Time.fixedDeltaTime;
 		bool pressed = Input.GetButtonDown ("Fire1") && (clickDelay <= 0);
 
 		if(pressed && grounded){
-			clickDelay = 1.0f;
+			clickDelay = 0.05f;
 			rb.AddForce (new Vector2 (0, jumpForce));
 		}
 
