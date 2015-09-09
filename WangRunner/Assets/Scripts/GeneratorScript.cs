@@ -27,7 +27,9 @@ public class GeneratorScript : MonoBehaviour {
 		float farthestRoomEndX = 0;
 
 		foreach (var room in currentLevels) {
+            
 			float roomWidth = room.transform.Find ("floor").localScale.x;
+            Debug.Log(roomWidth.ToString());
 			float roomStartX = room.transform.position.x - (roomWidth * 0.5f);
 			float roomEndX = roomStartX + roomWidth;
 
