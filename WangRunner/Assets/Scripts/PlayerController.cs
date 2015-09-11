@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour {
 
 	public float movementSpeed = 3.0f;
 	public float jumpForce = 200.0f;
+	public float jetpackForce = 100.0f;
 	public Transform groundCheckTransform;
 	public LayerMask groundCheckLayerMask;
 	
@@ -49,15 +50,35 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void FixedUpdate(){
-		Vector2 newVelocity = rb.velocity;
 
+		// Constantly moves player to the right
+		Vector2 newVelocity = rb.velocity;
 		newVelocity.x = movementSpeed;
 		rb.velocity = newVelocity;
-		
-		clickDelay -= Time.fixedDeltaTime;
-		bool pressed = Input.GetButtonDown ("Fire1") && (clickDelay <= 0);
 
-		if(pressed && grounded){
+		// Click delay hack to prevent accidental double jumps
+		clickDelay -= Time.fixedDeltaTime;
+		bool pressedJump = false;
+
+		//== FOR DESKTOP: CONTROLS ==//
+		if ( Input.GetKeyDown(KeyCode.RightArrow) )
+			pressedJump = (clickDelay <= 0);
+		if (Input.GetKey (KeyCode.LeftArrow))
+			rb.AddForce (new Vector2 (0, 200));
+		//=============================//
+
+		// Will jump when right side of screen is tapped
+		int tCount = Input.touchCount;
+		if (tCount > 0){
+			foreach( var touch in Input.touches ){
+				if( touch.position.x > Screen.width / 2 )
+					pressedJump = (clickDelay <= 0) && ScreenIsTapped();
+				else{
+					rb.AddForce( new Vector2( 0, 10 ) );
+				}
+			}
+		}
+		if(pressedJump && grounded){
 			clickDelay = 0.05f;
 			rb.AddForce (new Vector2 (0, jumpForce));
 		}
@@ -67,5 +88,9 @@ public class PlayerController : MonoBehaviour {
 
 	void UpdateGroundedStatus(){
 		grounded = Physics2D.OverlapCircle (groundCheckTransform.position, 0.1f, groundCheckLayerMask);
+	}
+
+	bool ScreenIsTapped(){
+		return Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1);
 	}
 }
