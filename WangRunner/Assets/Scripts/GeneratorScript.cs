@@ -6,6 +6,9 @@ public class GeneratorScript : MonoBehaviour {
 
 	public GameObject[] availableLevels;
 
+    //how high the floor will be by default
+    public float DefaultFloorY = 0;
+
 	public List<GameObject> currentLevels;
 
 	private float screenWidthInPoints;
@@ -17,8 +20,6 @@ public class GeneratorScript : MonoBehaviour {
 
         //width/height * height = width.
 		screenWidthInPoints = height * Camera.main.aspect;
-        Debug.Log(screenWidthInPoints);
-        Debug.Log(Camera.main.aspect);
 	}
 
 	void FixedUpdate(){
@@ -63,7 +64,8 @@ public class GeneratorScript : MonoBehaviour {
 		float roomWidth = room.transform.Find ("floor").localScale.x;
 		float roomCenter = farthestRoomEndX + (roomWidth * 0.5f);
 
-		room.transform.position = new Vector3 (roomCenter, 0, 0);
+		room.transform.position = new Vector3 (roomCenter, DefaultFloorY, 0);
+        Debug.Log(string.Format("FloorX: {0}, FloorY: {1}, FloorHeight: {2}", farthestRoomEndX, DefaultFloorY, room.transform.Find("floor").localScale.y));
 		currentLevels.Add (room);
 	}
 }
