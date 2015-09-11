@@ -55,7 +55,7 @@ public class PlayerController : MonoBehaviour {
 		if ( Input.GetKeyDown(KeyCode.RightArrow) )
 			pressedJump = (clickDelay <= 0);
 		if (Input.GetKey (KeyCode.LeftArrow))
-			rb.AddForce (new Vector2 (0, 200));
+			rb.AddForce (new Vector2 (0, jetpackForce));
 		//=============================//
 
 		// Will jump when right side of screen is tapped
@@ -65,7 +65,7 @@ public class PlayerController : MonoBehaviour {
 				if( touch.position.x > Screen.width / 2 )
 					pressedJump = (clickDelay <= 0) && ScreenIsTapped();
 				else{
-					rb.AddForce( new Vector2( 0, 10 ) );
+					rb.AddForce( new Vector2( 0, jetpackForce ) );
 				}
 			}
 		}
