@@ -13,20 +13,11 @@ public class PlayerController : MonoBehaviour {
 	private bool grounded = false;
 	private Rigidbody2D rb;
 	private float clickDelay;
-
-	//public List<BoxCollider2D> platforms = new List<BoxCollider2D>();
 	
 	// Use this for initialization
 	void Start () {
 		rb = GetComponent<Rigidbody2D> ();
 		clickDelay = 0.05f;
-		//ground = GetComponent<BoxCollider2D> ();
-
-		/*GameObject[] groundStuff = GameObject.FindGameObjectsWithTag ("Ground");
-
-		for (int i = 0; i < groundStuff.Length; i++) {
-			platforms.Add(groundStuff[i].GetComponent<BoxCollider2D>());
-		}*/
 	}
 
 	

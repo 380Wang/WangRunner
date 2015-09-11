@@ -3,15 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class GeneratorScript : MonoBehaviour {
+
 	public GameObject[] availableLevels;
+
 	public List<GameObject> currentLevels;
 
 	private float screenWidthInPoints;
 
 	// Use this for initialization
 	void Start () {
+        //height of the camera
 		float height = 2.0f * Camera.main.orthographicSize;
+
+        //width/height * height = width.
 		screenWidthInPoints = height * Camera.main.aspect;
+        Debug.Log(screenWidthInPoints);
+        Debug.Log(Camera.main.aspect);
 	}
 
 	void FixedUpdate(){
@@ -29,7 +36,6 @@ public class GeneratorScript : MonoBehaviour {
 		foreach (var room in currentLevels) {
             
 			float roomWidth = room.transform.Find ("floor").localScale.x;
-            Debug.Log(roomWidth.ToString());
 			float roomStartX = room.transform.position.x - (roomWidth * 0.5f);
 			float roomEndX = roomStartX + roomWidth;
 
@@ -41,11 +47,11 @@ public class GeneratorScript : MonoBehaviour {
 
 			farthestRoomEndX = Mathf.Max (farthestRoomEndX, roomEndX);
 		}
-
-		foreach (var room in roomsToRemove) {
-			currentLevels.Remove (room);
-			Destroy (room);
-		}
+        for (int i = 0; i < roomsToRemove.Count; i++)
+        {
+            currentLevels.Remove(roomsToRemove[i]);
+            Destroy(roomsToRemove[i]);
+        }
 
 		if (addRooms)
 			AddRoom (farthestRoomEndX);
