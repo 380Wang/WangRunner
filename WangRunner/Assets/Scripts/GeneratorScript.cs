@@ -17,8 +17,8 @@ public class GeneratorScript : MonoBehaviour {
 
         //width/height * height = width.
 		screenWidthInPoints = height * Camera.main.aspect;
-        Debug.Log(screenWidthInPoints);
-        Debug.Log(Camera.main.aspect);
+//        Debug.Log(screenWidthInPoints);
+//        Debug.Log(Camera.main.aspect);
 	}
 
 	void FixedUpdate(){
