@@ -40,7 +40,7 @@ public class TitleScreenInput : MonoBehaviour
         //did the player tap anywhere on the screen? then swap to the maingame scene
         if ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) || Input.GetMouseButtonDown(0))
         {
-            Application.LoadLevel("MainGame");
+            Application.LoadLevel("Main Menu");
         }
     }
 }
