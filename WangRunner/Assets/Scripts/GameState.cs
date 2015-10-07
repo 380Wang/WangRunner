@@ -28,4 +28,9 @@ public class GameState : MonoBehaviour {
 			paused = !paused;
 		}
 	}
+
+	public void BackButtonPressed(){
+
+		Application.LoadLevel ("Main Menu");
+	}
 }
