@@ -2,7 +2,7 @@
 using System.Collections;
 
 public enum ActionAbility{
-    None,
+    None = 0,
     Slide,
     Uppercut,
     Attack,
@@ -11,7 +11,7 @@ public enum ActionAbility{
 }
 
 public enum JumpAbility{
-    None,
+    None = 0,
     DoubleJump,
     DiveKick,
     Jetpack,
