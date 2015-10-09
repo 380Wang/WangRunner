@@ -13,9 +13,10 @@ public class TitleScreenInput : MonoBehaviour
     //the flashing text in the title screen
     public Text tapText;
 
+
     void Start()
     {
-        AudioSource.PlayClipAtPoint(GetComponent<AudioSource>().clip, new Vector3(0, 0, 0));
+        //AudioSource.PlayClipAtPoint(GetComponent<AudioSource>().clip, new Vector3(0, 0, 0));
     }
 
     void Update()
