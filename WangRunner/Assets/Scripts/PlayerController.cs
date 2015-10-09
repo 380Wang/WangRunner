@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour {
 	public Transform groundCheckTransform;
 	public LayerMask groundCheckLayerMask;
 	public Text currentScore;
+    public JumpAbility CurrentJump = JumpAbility.None;
+    public ActionAbility CurrentAcction = ActionAbility.None;
 	
 	private bool grounded = false;
 	private Rigidbody2D player;
