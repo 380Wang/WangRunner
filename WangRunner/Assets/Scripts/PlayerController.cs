@@ -18,10 +18,12 @@ public class PlayerController : MonoBehaviour {
 	private bool grounded = false;
 	private Rigidbody2D player;
 	private float clickDelay;
+    Collider2D playerCollider;
 	
 	// Use this for initialization
 	void Start () {
 		player = GetComponent<Rigidbody2D> ();
+        playerCollider = player.GetComponent<Collider2D>();
 		clickDelay = 0.04f;
 	}
 
@@ -76,7 +78,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void UpdateGroundedStatus(){
-		grounded = Physics2D.OverlapCircle (groundCheckTransform.position, 0.1f, groundCheckLayerMask);
+        grounded = Physics2D.IsTouchingLayers(playerCollider, groundCheckLayerMask.value);
 	}
 
 	void PlayerJump(){
