@@ -14,6 +14,7 @@ public enum JumpAbility{
     None,
     DoubleJump,
     DiveKick,
+	Jump,
     Jetpack,
     AirStabilizer,
     Glider

@@ -5,23 +5,29 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
 
+	public float boostForce = 3.0f;
+	public float diveKickForce = 6.0f;
 	public float movementSpeed = 3.0f;
 	public float jumpForce = 200.0f;
 	public float jetpackForce = 100.0f;
+	public float uppercutForce = 6.0f;
+
 	public RectTransform titleBar;
 	public Transform groundCheckTransform;
 	public LayerMask groundCheckLayerMask;
 	public Text currentScore;
     public JumpAbility CurrentJump = JumpAbility.None;
-    public ActionAbility CurrentAcction = ActionAbility.None;
+    public ActionAbility CurrentAction = ActionAbility.None;
 	
 	private bool grounded = false;
+	private bool isFirstTouch = true;
 	private Rigidbody2D player;
 	private float clickDelay;
 	
 	// Use this for initialization
 	void Start () {
 		player = GetComponent<Rigidbody2D> ();
+		// Click delay hack
 		clickDelay = 0.04f;
 	}
 
@@ -33,17 +39,19 @@ public class PlayerController : MonoBehaviour {
 
 	void FixedUpdate(){
 
-		PushRight ();
+		Run ();
 
 		// Click delay hack to prevent accidental double jumps
 		clickDelay -= Time.fixedDeltaTime;
-		bool pressedRight = false;
+		//bool pressedRight = false;
 
 		//== FOR DESKTOP: CONTROLS ==//
-		if ( Input.GetKeyDown(KeyCode.RightArrow) )
-			pressedRight = (clickDelay <= 0);
-		if (Input.GetKey (KeyCode.LeftArrow))
-			PlayerActivateJetpack ();
+			if (Input.GetKey (KeyCode.RightArrow)) {
+				RegisterTouch (RIGHT);
+			}
+			if (Input.GetKey (KeyCode.LeftArrow)) {
+				RegisterTouch (LEFT);
+			}
 		//=============================//
 
 		// Will jump when right side of screen is tapped
@@ -51,16 +59,15 @@ public class PlayerController : MonoBehaviour {
 		if (tCount > 0){
 			foreach( var touch in Input.touches ){
 				if( TouchedGameplay(touch) ){
-					if( TouchedRightSide(touch) )
-						pressedRight = (clickDelay <= 0) && ScreenIsTapped();
+					if( TouchedRightSide(touch) ){
+							RegisterTouch( RIGHT );
+					}
+						//pressedRight = (clickDelay <= 0) && ScreenIsTapped();
 					else{
-						PlayerActivateJetpack ();
+							RegisterTouch( LEFT );
 					}
 				}
 			}
-		}
-		if(pressedRight && grounded){
-			PlayerJump();
 		}
 
 		UpdateGroundedStatus ();
@@ -79,19 +86,75 @@ public class PlayerController : MonoBehaviour {
 		grounded = Physics2D.OverlapCircle (groundCheckTransform.position, 0.1f, groundCheckLayerMask);
 	}
 
-	void PlayerJump(){
-		clickDelay = 0.04f;
-		player.AddForce (new Vector2 (0, jumpForce));
+	void Boost(){
+		player.AddForce (new Vector2 (boostForce, 0));
 	}
 
-	void PlayerActivateJetpack(){
+	void DiveKick(){
+		if (isFirstTouch) {
+			if (ScreenIsTapped ()) {
+				isFirstTouch = false;
+				Jump ();
+			}
+		} else {
+			if( grounded )
+				isFirstTouch = true;
+			else{
+				Vector3 diveVelo = player.velocity;
+				diveVelo.x = diveKickForce;
+				diveVelo.y = -1.0f * diveKickForce;
+				player.velocity = diveVelo;
+			}
+		}
+	}
+
+	void Slide(){
+		if (Input.touchCount > 0)
+			player.transform.eulerAngles = new Vector3( 0, 0, 45 );
+		else {
+			player.transform.eulerAngles = new Vector3 ( 0, 0, 0 );
+		}
+	}
+
+	void StabilizeY(){
+		if (isFirstTouch) {
+			if( ScreenIsTapped() ){
+				isFirstTouch = false;
+				Jump ();
+			}
+		} else {
+			if(grounded)
+				isFirstTouch = true;
+			else{
+				//Debug.Log("Stabilizing Y");
+				Vector3 currVelo = player.velocity;
+				currVelo.y = 0.6f;
+				player.velocity = currVelo;
+			}
+		}
+	}
+
+	void Uppercut(){
+		player.velocity = new Vector2 (uppercutForce, uppercutForce);
+	}
+
+	void Jump(){
+		if (ScreenIsTapped ()) {
+			if (grounded && clickDelay <= 0) {
+				player.AddForce (new Vector2 (0, jumpForce));
+				clickDelay = 0.02f;
+			}
+		}
+	}
+
+	void ActivateJetpack(){
 		player.AddForce (new Vector2 (0, jetpackForce));
 	}
 
 	/**
 	 * Constantly moves player to the right
 	 **/
-	void PushRight(){
+	void Run(){
 		Vector2 newVelocity = player.velocity;
 		newVelocity.x = movementSpeed;
 		player.velocity = newVelocity;
@@ -104,25 +167,91 @@ public class PlayerController : MonoBehaviour {
 		// In Android:
 		// Single finger = MouseButtonDown(0)
 		// Double finger = MouseButtonDown(1)
-		return Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1);
+		return Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1)
+			|| Input.GetKeyDown (KeyCode.LeftArrow) || Input.GetKeyDown (KeyCode.RightArrow);
+	}
+
+	private void RegisterTouch( bool touch ){
+		bool DEBUG_T = true;
+
+		if ( touch == LEFT ) {
+			// Left side was tapped
+			if( DEBUG_T && ScreenIsTapped() ) Debug.Log( "" + CurrentAction );
+			switch(CurrentAction){
+			case ActionAbility.Attack:
+
+				break;
+				// DONE
+			case ActionAbility.Boost:
+				Boost();
+				break;
+			case ActionAbility.GrapplingHook:
+
+				break;
+				// NOT DONE
+			case ActionAbility.Slide:
+				Slide();
+				break;
+				// DONE
+			case ActionAbility.Uppercut:
+				Uppercut();
+				break;
+			default:
+				if( DEBUG_T) Debug.Log ("LeftSide");
+				break;
+			}
+		} else {
+			if( DEBUG_T && ScreenIsTapped() ) Debug.Log( "" + CurrentJump );
+			// Right side was tapped
+			switch(CurrentJump){
+				// DONE
+			case JumpAbility.AirStabilizer:
+				StabilizeY();
+				break;
+			case JumpAbility.DiveKick:
+				DiveKick();
+				break;
+			case JumpAbility.DoubleJump:
+
+				break;
+
+			case JumpAbility.Glider:
+
+				break;
+				// DONE
+			case JumpAbility.Jump:
+				Jump();
+				break;
+				// DONE
+			case JumpAbility.Jetpack:
+				ActivateJetpack();
+				break;
+			default:
+				Debug.Log("RightSide");
+				break;
+			}
+		}
 	}
 
 	/**
 	 * Check if game was touched and not UI
 	 **/
-	bool TouchedGameplay( Touch touch ){
+	private bool TouchedGameplay( Touch touch ){
 		if (touch.position.y < (Screen.height - (Screen.height / 8)))
 			return true;
 		else
 			return false;
 	}
-
-	bool TouchedRightSide(Touch touch){
+	
+	private bool TouchedRightSide(Touch touch){
 		bool isOnScreen = false;
-
+		
 		if (touch.position.x > Screen.width / 2)
 			isOnScreen = true;
-
+		
 		return isOnScreen;
 	}
+
+	private static bool LEFT = true;
+	private static bool RIGHT = false;
 }
