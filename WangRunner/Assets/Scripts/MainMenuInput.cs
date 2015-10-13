@@ -21,5 +21,13 @@ public class MainMenuInput : MonoBehaviour {
 	public void OptionsPressed(){
 		Application.LoadLevel ("Options");
 	}
+
+    public void ShopPressed(){
+        Application.LoadLevel("ShopScreen");
+    }
+
+    public void LeaderboardsPressed(){
+        Application.LoadLevel("LeaderboardScreen");
+    }
 	
 }
