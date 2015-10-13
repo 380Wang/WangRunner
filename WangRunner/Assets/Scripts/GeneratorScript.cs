@@ -6,12 +6,16 @@ public class GeneratorScript : MonoBehaviour {
 
 	public GameObject[] availableLevels;
 
-    //how high the floor will be by default
+    //how high the level prefab will be by default
     public float DefaultFloorY = 0;
+
+    //the y axis of the floor of the level prefab by default
+    public float DefaultObstacleY = -3.5f;
 
 	public List<GameObject> currentLevels;
 
 	private float screenWidthInPoints;
+
 
 	// Use this for initialization
 	void Start () {
@@ -20,10 +24,12 @@ public class GeneratorScript : MonoBehaviour {
 
         //width/height * height = width.
 		screenWidthInPoints = height * Camera.main.aspect;
+        
 	}
 
 	void FixedUpdate(){
 		GenerateRoomIfRequired ();
+
 	}
 
 	void GenerateRoomIfRequired(){
@@ -35,7 +41,6 @@ public class GeneratorScript : MonoBehaviour {
 		float farthestRoomEndX = 0;
 
 		foreach (var room in currentLevels) {
-            
 			float roomWidth = room.transform.Find ("floor").localScale.x;
 			float roomStartX = room.transform.position.x - (roomWidth * 0.5f);
 			float roomEndX = roomStartX + roomWidth;
@@ -54,8 +59,10 @@ public class GeneratorScript : MonoBehaviour {
             Destroy(roomsToRemove[i]);
         }
 
-		if (addRooms)
-			AddRoom (farthestRoomEndX);
+        if (addRooms)
+        {
+            AddRoom(farthestRoomEndX);
+        }
 	}
 	
 	void AddRoom( float farthestRoomEndX ){
@@ -65,7 +72,7 @@ public class GeneratorScript : MonoBehaviour {
 		float roomCenter = farthestRoomEndX + (roomWidth * 0.5f);
 
 		room.transform.position = new Vector3 (roomCenter, DefaultFloorY, 0);
-        Debug.Log(string.Format("FloorX: {0}, FloorY: {1}, FloorHeight: {2}", farthestRoomEndX, DefaultFloorY, room.transform.Find("floor").localScale.y));
+        //Debug.Log(string.Format("FloorX: {0}, FloorY: {1}, FloorHeight: {2}", farthestRoomEndX, DefaultFloorY, room.transform.Find("floor").localScale.y));
 		currentLevels.Add (room);
 	}
 }
