@@ -14,3 +14,11 @@
 NOTE:
 - Web requests don't happen automatically! They can take a second or so. All of the functions are coroutines.
 - use LoadScores to get the most recent scores. (just ONCE AND WAIT...do not do it every frame)
+
+I, BRIAN CANEDO, HAVE ALREADY GOTTEN THE PRIVATE URL, THE CODES, AND HAVE PUT THE CODES ONTO ,THE PREFAB SETTINGS
+
+PRIVATE URL: http://dreamlo.com/lb/a6eOZmVIr02e3o_0Mx5JkQ7tq39vnbHkuH9beLZ2m9tw
+
+Public code to be cut and pasted onto Unity: 561805416e51b60070b8afa0
+
+Private code to be cut and pasted onto Unity: a6eOZmVIr02e3o_0Mx5JkQ7tq39vnbHkuH9beLZ2m9tw
