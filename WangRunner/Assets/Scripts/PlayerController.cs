@@ -13,13 +13,15 @@ public class PlayerController : MonoBehaviour
     public float uppercutForce = 12.0f;
 
     public RectTransform titleBar;
-    public Transform groundCheckTransform;
+    public Transform groundCheckTransformLeft;
+    public Transform groundCheckTransformRight;
     public LayerMask groundCheckLayerMask;
     public Text currentScore;
     public JumpAbility CurrentJump = JumpAbility.None;
     public ActionAbility CurrentAction = ActionAbility.None;
 
     private bool grounded = false;
+    private bool lastGrounded = false;
     private bool isFirstTouch = true;
     private Rigidbody2D player;
     private float clickDelay;
@@ -31,7 +33,6 @@ public class PlayerController : MonoBehaviour
         player = GetComponent<Rigidbody2D>();
         // Click delay hack
         clickDelay = 0.04f;
-        
     }
 
 
@@ -45,6 +46,8 @@ public class PlayerController : MonoBehaviour
     {
 
         Run();
+
+        
 
         // Click delay hack to prevent accidental double jumps
         clickDelay -= Time.fixedDeltaTime;
@@ -81,19 +84,59 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-        else if (grounded && CurrentAction == ActionAbility.Slide && actionHappening && !ScreenIsHeld(true))
-        {
-            player.rotation = 0;
-            actionHappening = false;
-        }
 
         UpdateGroundedStatus();
+        //if we just hit the ground
+        if (JustGrounded)
+        {
+            isFirstTouch = true;
+            player.rotation = 0;
+            actionHappening = false;
+            
+            if (actionHappening)
+            {
+                if (CurrentAction == ActionAbility.Slide && !Sliding())
+                {
+                    player.rotation = 0;
+                    actionHappening = false;
+                }
+            }
+
+
+        }
+            //are we still on the ground?
+        else if (grounded)
+        {
+            if (actionHappening && CurrentAction == ActionAbility.Slide && !Sliding())
+            {
+                //if we have the slide and aren't holding down the press
+                player.rotation = 0;
+                actionHappening = false;
+            }
+        }
+
+        /*
         if (grounded)
         {
             isFirstTouch = true;
+            //if you're sliding
+            if (Sliding())
+            {
+                Debug.Log("Sliding!!!!!");
+            }
+            else
+            {
+                Debug.Log("Not sliding");
+
+            }
         }
+        */
 
+    }
 
+    bool Sliding()
+    {
+        return actionHappening && ScreenIsHeld(true);
     }
 
     void OnGUI()
@@ -107,13 +150,24 @@ public class PlayerController : MonoBehaviour
         currentScore.text = "Distance: " + ((int)transform.position.x + 3) + "m";
     }
 
+    bool JustGrounded
+    {
+        //are we grounded now but last frame we weren't grounded?
+        get
+        {
+            return grounded && !lastGrounded;
+        }
+    }
     void UpdateGroundedStatus()
     {
-        grounded = Physics2D.OverlapCircle(groundCheckTransform.position, 0.1f, groundCheckLayerMask);
-        //if the player is on the ground and they aren't sliding then reset the rotation and the action state
-        if (grounded && (CurrentAction == ActionAbility.Slide && !actionHappening))
+        lastGrounded = grounded;
+
+        grounded = Physics2D.OverlapCircle(groundCheckTransformLeft.position, 0.1f, groundCheckLayerMask) || Physics2D.OverlapCircle(groundCheckTransformRight.position, 0.1f, groundCheckLayerMask);
+
+
+        if (Time.time % 1 == 0)
         {
-            player.rotation = 0;
+            Debug.Log("Grounded: " + grounded);
         }
     }
 
@@ -128,10 +182,10 @@ public class PlayerController : MonoBehaviour
         {
             isFirstTouch = false;
             Jump();
-            Debug.Log("Dive...");
+            //Debug.Log("Dive...");
         }
         //did we just tap the screen for the second time?
-            
+
         else if (ScreenIsTapped())
         {
             //Debug.Log("Kick!");
@@ -309,7 +363,7 @@ public class PlayerController : MonoBehaviour
                     ActivateJetpack();
                     break;
                 default:
-                    
+
                     break;
             }
         }
