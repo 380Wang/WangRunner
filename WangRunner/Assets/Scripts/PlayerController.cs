@@ -12,7 +12,6 @@ public class PlayerController : MonoBehaviour
     public float jetpackForce = 100.0f;
     public float uppercutForce = 12.0f;
 
-    public RectTransform titleBar;
     public Transform groundCheckTransformLeft;
     public Transform groundCheckTransformRight;
     public LayerMask groundCheckLayerMask;
