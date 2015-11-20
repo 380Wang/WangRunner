@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class GeneratorScript : MonoBehaviour {
 
+    //this boolean should ONLY be enabled in the title screen so that only basic levels spawn.
+    public bool TitleScreen = false;
 	public GameObject[] basicLevels;
     public GameObject[] boostLevels;
     public GameObject[] diveKickLevels;
@@ -79,69 +81,82 @@ public class GeneratorScript : MonoBehaviour {
 
         int randomIndex = 0;
 
-        // Left action
-        switch (player.CurrentAction)
+        if (TitleScreen)
         {
-            case ActionAbility.Attack:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[0] = basicLevels[randomIndex];
-                break;
-            case ActionAbility.Boost:
-                randomIndex = Random.Range(0, boostLevels.Length);
-                availableLevels[0] = boostLevels[randomIndex];
-                break;
-            case ActionAbility.GrapplingHook:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[0] = basicLevels[randomIndex];
-                break;
-            case ActionAbility.Slide:
-                randomIndex = Random.Range(0, slideLevels.Length);
-                availableLevels[0] = slideLevels[randomIndex];
-                break;
-            case ActionAbility.Uppercut:
-                randomIndex = Random.Range(0, uppercutLevels.Length);
-                availableLevels[0] = uppercutLevels[randomIndex];
-                break;
-            default:
-                Debug.Log("Oh no...");
-                break;
+            availableLevels[0] = basicLevels[randomIndex];
+            availableLevels[1] = basicLevels[randomIndex];
         }
+        else
+        {
+            // Left action
+            switch (player.CurrentAction)
+            {
+                case ActionAbility.Attack:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[0] = basicLevels[randomIndex];
+                    break;
+                case ActionAbility.Boost:
+                    randomIndex = Random.Range(0, boostLevels.Length);
+                    availableLevels[0] = boostLevels[randomIndex];
+                    break;
+                case ActionAbility.GrapplingHook:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[0] = basicLevels[randomIndex];
+                    break;
+                case ActionAbility.Slide:
+                    randomIndex = Random.Range(0, slideLevels.Length);
+                    availableLevels[0] = slideLevels[randomIndex];
+                    break;
+                case ActionAbility.Uppercut:
+                    randomIndex = Random.Range(0, uppercutLevels.Length);
+                    availableLevels[0] = uppercutLevels[randomIndex];
+                    break;
+                default:
+                    Debug.Log("Oh no...");
+                    break;
+            }
+        }
+        
         if (availableLevels[0] == null)
         {
             if (DEBUG) Debug.Log("Level generate fail.");
             return;
         }
-        // Right action
-        switch (player.CurrentJump)
+        if(!TitleScreen)
         {
-            case JumpAbility.AirStabilizer:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[1] = stabilizerLevels[randomIndex];
-                break;
-            case JumpAbility.DiveKick:
-                randomIndex = Random.Range(0, diveKickLevels.Length);
-                availableLevels[1] = diveKickLevels[randomIndex];
-                break;
-            case JumpAbility.DoubleJump:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[1] = basicLevels[randomIndex];
-                break;
-            case JumpAbility.Glider:
-                randomIndex = Random.Range(0, gliderLevels.Length);
-                availableLevels[1] = gliderLevels[randomIndex];
-                break;
-            case JumpAbility.Jetpack:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[1] = basicLevels[randomIndex];
-                break;
-            case JumpAbility.Jump:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[1] = basicLevels[randomIndex];
-                break;
-            default:
-                Debug.Log("Dieeee!!!");
-                break;
+            // Right action
+            switch (player.CurrentJump)
+            {
+                case JumpAbility.AirStabilizer:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[1] = stabilizerLevels[randomIndex];
+                    break;
+                case JumpAbility.DiveKick:
+                    randomIndex = Random.Range(0, diveKickLevels.Length);
+                    availableLevels[1] = diveKickLevels[randomIndex];
+                    break;
+                case JumpAbility.DoubleJump:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[1] = basicLevels[randomIndex];
+                    break;
+                case JumpAbility.Glider:
+                    randomIndex = Random.Range(0, gliderLevels.Length);
+                    availableLevels[1] = gliderLevels[randomIndex];
+                    break;
+                case JumpAbility.Jetpack:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[1] = basicLevels[randomIndex];
+                    break;
+                case JumpAbility.Jump:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[1] = basicLevels[randomIndex];
+                    break;
+                default:
+                    Debug.Log("Dieeee!!!");
+                    break;
+            }
         }
+        
 
 		int randomRoomIndex = Random.Range (0, availableLevels.Length);
 		GameObject room = (GameObject)Instantiate (availableLevels [randomRoomIndex]);
