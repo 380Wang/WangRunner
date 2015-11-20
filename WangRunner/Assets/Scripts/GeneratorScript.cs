@@ -26,6 +26,9 @@ public class GeneratorScript : MonoBehaviour {
     private GameObject[] availableLevels = new GameObject[2];
     private PlayerController player;
 
+    private ScoreManager theScoreManager;
+
+
     //===== DEBUG =====//
     bool DEBUG = true;
     //================//
@@ -38,11 +41,26 @@ public class GeneratorScript : MonoBehaviour {
         //width/height * height = width.
 		screenWidthInPoints = height * Camera.main.aspect;
         player = GetComponent<PlayerController>();
+
+        theScoreManager = FindObjectOfType<ScoreManager>();
 	}
 
 	void FixedUpdate(){
 		GenerateRoomIfRequired ();
 	}
+
+    //This is something I saw online, not really sure if it works.
+    public void RestartGame(){
+        StartCoroutine ("RestartGameCo");
+    }
+
+    public void RestartGameCo(){
+        theScoreManager.scoreIncreasing = false;
+
+        theScoreManager.scoreCount = 0;
+        theScoreManager.scoreIncreasing = true;
+        
+    }
 
 	void GenerateRoomIfRequired(){
 		List<GameObject> roomsToRemove = new List<GameObject>();
