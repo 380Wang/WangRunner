@@ -1,10 +1,22 @@
 fileFormatVersion: 2
 guid: 0bea1631bf99b9f45a7b7ee9445acdd8
-timeCreated: 1441659949
+timeCreated: 1449527029
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - groundCheckTransformLeft: {instanceID: 0}
+  - groundCheckTransformRight: {instanceID: 0}
+  - currentScore: {instanceID: 0}
+  - debuggerOutput: {instanceID: 0}
+  - coinFx: {fileID: 8300000, guid: b724152f7fe28be4ea886def1df134a7, type: 3}
+  - deathFx: {instanceID: 0}
+  - jumpFx: {instanceID: 0}
+  - attackFx: {instanceID: 0}
+  - slideFx: {instanceID: 0}
+  - jetpackFx: {instanceID: 0}
+  - boostFx: {fileID: 8300000, guid: e174704eeff62a945ad5554a6a465fa1, type: 3}
+  - gliderFx: {fileID: 8300000, guid: 3c10e6b7a5e829a46a801770f56646f3, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

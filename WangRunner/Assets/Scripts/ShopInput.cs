@@ -12,9 +12,12 @@ public class ShopInput : MonoBehaviour {
     Dictionary<string, int> itemPrices = new Dictionary<string, int>();
     public Text coinsText;
 
+    AudioSource audio;
+
     GameObject messageBox;
     public Text messageBoxText;
 	void Start () {
+        audio = GetComponent<AudioSource>();
 
         coinsText.text = string.Format("Coins: {0}", PlayerPrefs.GetInt("CurrentCoins"));
         messageBox = GameObject.Find("MessageBox");
@@ -81,15 +84,18 @@ public class ShopInput : MonoBehaviour {
 
     public void PurchaseItem(string itemToBuy)
     {
+
         if(PlayerPrefs.GetInt("CurrentCoins") - itemPrices[itemToBuy] >= 0)
         {
             //buy it
             PlayerPrefs.SetInt("CurrentCoins", PlayerPrefs.GetInt("CurrentCoins") - itemPrices[itemToBuy]);
+            //mark it bought
             PlayerPrefs.SetInt(itemToBuy, 1);
 
             ShowPurchasedDialog();
             UpdateCoinsText();
             getRidOfPurchasedItems();
+            audio.Play();
         }
         else
         {
@@ -99,7 +105,6 @@ public class ShopInput : MonoBehaviour {
 
         
     }
-	
 	// Update is called once per frame
 	void Update () {
         if (Input.GetKey(KeyCode.LeftControl))
@@ -112,4 +117,6 @@ public class ShopInput : MonoBehaviour {
     public void BackPressed() {
         Application.LoadLevel("Main Menu");
     }
+
+
 }
