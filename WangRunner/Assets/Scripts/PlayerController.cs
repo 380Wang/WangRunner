@@ -10,21 +10,36 @@ public class PlayerController : MonoBehaviour
     public float movementSpeed = 3.0f;
     public float jumpForce = 200.0f;
     public float jetpackForce = 100.0f;
+    public float glideFallFactor = 1.0f;
     public float uppercutForce = 12.0f;
 
     public Transform groundCheckTransformLeft;
     public Transform groundCheckTransformRight;
     public LayerMask groundCheckLayerMask;
     public Text currentScore;
-    public JumpAbility CurrentJump = JumpAbility.None;
-    public ActionAbility CurrentAction = ActionAbility.None;
+    public JumpAbility CurrentJump = JumpAbility.Jump;
+    public ActionAbility CurrentAction = ActionAbility.Slide;
 
     private bool grounded = false;
     private bool lastGrounded = false;
     private bool isFirstTouch = true;
+    private bool isLeftPressed = false;
+    private bool isRightPressed = false;
+    private bool isBoosting = false;
+    private bool isDiveKicking = false;
+    private bool isJumping = false;
+    private bool isStabilizing = false;
+    private bool isSliding = false;
+    private bool isUppercutting = false;
     private Rigidbody2D player;
     private float clickDelay;
+    private float clickDelay2;
     private bool actionHappening = false;
+    private float dropDistance;
+
+    //===== DEBUG =====//
+    private bool DEBUG = false;
+    //=================//
 
     // Use this for initialization
     void Start()
@@ -32,6 +47,7 @@ public class PlayerController : MonoBehaviour
         player = GetComponent<Rigidbody2D>();
         // Click delay hack
         clickDelay = 0.04f;
+        clickDelay2 = 0.04f;
     }
 
 
@@ -45,12 +61,10 @@ public class PlayerController : MonoBehaviour
     {
 
         Run();
-
         
-
         // Click delay hack to prevent accidental double jumps
         clickDelay -= Time.fixedDeltaTime;
-        //bool pressedRight = false;
+        if (CurrentJump == JumpAbility.DoubleJump) clickDelay2 -= Time.fixedDeltaTime;
 
         //== FOR DESKTOP: CONTROLS ==//
         if (Input.GetKey(KeyCode.RightArrow))
@@ -63,7 +77,7 @@ public class PlayerController : MonoBehaviour
         }
         //=============================//
 
-        // Will jump when right side of screen is tapped
+        // Register touches
         int tCount = Input.touchCount;
         if (tCount > 0)
         {
@@ -75,7 +89,6 @@ public class PlayerController : MonoBehaviour
                     {
                         RegisterTouch(RIGHT);
                     }
-                    //pressedRight = (clickDelay <= 0) && ScreenIsTapped();
                     else
                     {
                         RegisterTouch(LEFT);
@@ -84,69 +97,14 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        TrackTouch();
+        UpdateAbilityStatus();
         UpdateGroundedStatus();
-        //if we just hit the ground
-        if (JustGrounded)
-        {
-            isFirstTouch = true;
-            player.rotation = 0;
-            actionHappening = false;
-            
-            if (actionHappening)
-            {
-                if (CurrentAction == ActionAbility.Slide && !Sliding())
-                {
-                    player.rotation = 0;
-                    actionHappening = false;
-                }
-            }
-
-
-        }
-            //are we still on the ground?
-        else if (grounded)
-        {
-            if (actionHappening && CurrentAction == ActionAbility.Slide && !Sliding())
-            {
-                //if we have the slide and aren't holding down the press
-                player.rotation = 0;
-                actionHappening = false;
-            }
-        }
-
-        /*
-        if (grounded)
-        {
-            isFirstTouch = true;
-            //if you're sliding
-            if (Sliding())
-            {
-                Debug.Log("Sliding!!!!!");
-            }
-            else
-            {
-                Debug.Log("Not sliding");
-
-            }
-        }
-        */
-
     }
 
     bool Sliding()
     {
         return actionHappening && ScreenIsHeld(true);
-    }
-
-    void OnGUI()
-    {
-        if (currentScore != null)
-            UpdateScore();
-    }
-
-    void UpdateScore()
-    {
-        currentScore.text = "Distance: " + ((int)transform.position.x + 3) + "m";
     }
 
     bool JustGrounded
@@ -157,22 +115,107 @@ public class PlayerController : MonoBehaviour
             return grounded && !lastGrounded;
         }
     }
+
+    void UpdateAbilityStatus()
+    {
+        if(!isLeftPressed && !isRightPressed)
+        {
+            Reset();
+            switch (CurrentAction)
+            {
+                case ActionAbility.Slide:
+                    isSliding = false;
+                    break;
+                default:
+                    break;
+            }
+            switch (CurrentJump)
+            {
+                case JumpAbility.AirStabilizer:
+                    isJumping = false;
+                    isStabilizing = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if(isLeftPressed)
+        {
+            switch (CurrentAction)
+            {
+                case ActionAbility.Attack:
+
+                    break;
+                case ActionAbility.Boost:
+                    isBoosting = true;
+                    break;
+                case ActionAbility.GrapplingHook:
+
+                    break;
+                case ActionAbility.Slide:
+                    isSliding = true;
+                    break;
+                case ActionAbility.Uppercut:
+                    isUppercutting = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (isRightPressed)
+        {
+            switch (CurrentJump)
+            {
+                case JumpAbility.AirStabilizer:
+                    if (isFirstTouch) isJumping = true;
+                    else isStabilizing = true;
+                    break;
+                case JumpAbility.DiveKick:
+                    if (isFirstTouch) isJumping = true;
+                    else isDiveKicking = true;
+                    break;
+                case JumpAbility.DoubleJump:
+
+                    break;
+                case JumpAbility.Glider:
+
+                    break;
+                case JumpAbility.Jetpack:
+
+                    break;
+                case JumpAbility.Jump:
+                    isJumping = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     void UpdateGroundedStatus()
     {
         lastGrounded = grounded;
 
         grounded = Physics2D.OverlapCircle(groundCheckTransformLeft.position, 0.1f, groundCheckLayerMask) || Physics2D.OverlapCircle(groundCheckTransformRight.position, 0.1f, groundCheckLayerMask);
-
+        if(grounded)
+        {
+            if(CurrentJump == JumpAbility.DiveKick && !isLeftPressed) player.rotation = 0;
+            isFirstTouch = true;    // Should always be true upon grounded, so he can jump
+        }
 
         if (Time.time % 1 == 0)
         {
-            Debug.Log("Grounded: " + grounded);
+            if(DEBUG) Debug.Log("Grounded: " + grounded);
         }
     }
 
     void Boost()
     {
-        player.velocity = new Vector2(boostForce, 0);
+        Vector2 boostVelo = player.velocity;
+        boostVelo.x += boostForce;
+        player.velocity = boostVelo;
     }
 
     void DiveKick()
@@ -184,10 +227,10 @@ public class PlayerController : MonoBehaviour
             //Debug.Log("Dive...");
         }
         //did we just tap the screen for the second time?
-
-        else if (ScreenIsTapped())
+        else if (!isFirstTouch && isRightPressed)
         {
             //Debug.Log("Kick!");
+            //isFirstTouch = true;
             Vector3 diveVelo = player.velocity;
             diveVelo.x = diveKickForce;
             diveVelo.y = -1.0f * diveKickForce;
@@ -196,10 +239,58 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void DoubleJump()
+    {
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            Debug.Log("Grounded: " + grounded + "isFirstTouch: " + isFirstTouch);
+            if (isFirstTouch)
+            {
+                this.Jump();
+                isFirstTouch = false;
+            }
+            else if (!isFirstTouch && !grounded)
+            {
+                Debug.Log("DoubleJumping");
+                isFirstTouch = true;
+                if (clickDelay2 <= 0)
+                {
+                    clickDelay2 = 0.04f;
+                    player.AddForce(new Vector2(0, jumpForce));
+                }
+            }
+        }
+    }
+
+    void Glide()
+    {
+        if (isFirstTouch && ScreenIsTapped())
+        {
+            isFirstTouch = false;
+            Jump();
+        }
+        else if (!isFirstTouch && isRightPressed)
+        {
+            Vector2 glideVelo = player.velocity;
+            glideVelo.y = -1.0f * glideFallFactor;
+            player.velocity = glideVelo;
+        }
+    }
+
     void Slide()
     {
-        player.rotation = 90;
-        actionHappening = true;
+        // Drop player to slide
+        // (Get the size of box -> decrease position y by size/2)
+        if (ScreenIsTapped())
+        {
+            dropDistance = 0.5f * transform.localScale.x;
+            Vector2 currPos = player.position;
+            currPos.y -= dropDistance;
+
+            player.position = currPos;
+            player.rotation = 90;
+        }
+        //actionHappening = true;
 
         /*
 		if (Input.touchCount > 0)
@@ -211,37 +302,25 @@ public class PlayerController : MonoBehaviour
 
     void StabilizeY()
     {
-        if (isFirstTouch)
+        if (isFirstTouch && ScreenIsTapped())
         {
-            if (ScreenIsTapped())
-            {
-                isFirstTouch = false;
-                Jump();
-            }
+            isFirstTouch = false;
+            Jump();
         }
-        else
+        else if(!isFirstTouch && !grounded)
         {
-            if (grounded)
-                isFirstTouch = true;
-            else
-            {
-                //Debug.Log("Stabilizing Y");
-                Vector3 currVelo = player.velocity;
-                currVelo.y = 0.6f;
-                player.velocity = currVelo;
-            }
+            //Debug.Log("Stabilizing Y");
+            Vector3 currVelo = player.velocity;
+            currVelo.y = 0.6f;
+            player.velocity = currVelo;
         }
     }
 
     void Uppercut()
     {
-        if (!actionHappening)
-        {
-            player.velocity = new Vector2(uppercutForce, uppercutForce * 2);
-            player.rotation = -45;
-            actionHappening = true;
-        }
-
+        player.velocity = new Vector2(uppercutForce, uppercutForce);
+        player.rotation = -45;
+        //actionHappening = true;
     }
 
     void Jump()
@@ -250,10 +329,9 @@ public class PlayerController : MonoBehaviour
         {
             if (grounded && clickDelay <= 0)
             {
+                clickDelay = 0.04f;
                 player.AddForce(new Vector2(0, jumpForce));
-                clickDelay = 0.02f;
-                actionHappening = false;
-
+                //actionHappening = false;
             }
         }
     }
@@ -263,17 +341,20 @@ public class PlayerController : MonoBehaviour
         player.AddForce(new Vector2(0, jetpackForce));
     }
 
+    void Reset()
+    {
+        player.rotation = 0;
+        Run();
+    }
+
     /**
      * Constantly moves player to the right
      **/
     void Run()
     {
-        if (!actionHappening || actionHappening && CurrentAction == ActionAbility.Slide)
-        {
-            Vector2 newVelocity = player.velocity;
-            newVelocity.x = movementSpeed;
-            player.velocity = newVelocity;
-        }
+        Vector2 newVelo = player.velocity;
+        newVelo.x = movementSpeed;
+        player.velocity = newVelo;
     }
 
     /**
@@ -302,31 +383,129 @@ public class PlayerController : MonoBehaviour
             || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow);
     }
 
+    void TrackTouch()
+    {
+        bool DDEBUG = false;
+        if(Input.touchCount > 0)
+        {
+            foreach (var touch in Input.touches)
+            {
+                if (!TouchedRightSide(touch))
+                {
+                    if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    {
+                        isLeftPressed = false;
+                        //return true;
+                    }
+                }
+                else
+                {
+                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    {
+                        isRightPressed = false;
+                        //return true;
+                    }
+                }
+            }
+        }
+        if (!Input.GetKey(KeyCode.LeftArrow))
+        {
+            if (DDEBUG) Debug.Log("LeftArrow UP");
+            isLeftPressed = false;
+        }
+        if (!Input.GetKey(KeyCode.RightArrow))
+        {
+            if (DDEBUG) Debug.Log("RightArrow UP");
+            isRightPressed = false;
+        }
+        
+    }
+
+    //bool FingerLifted(bool side)
+    //{
+    //    bool DDEBUG = true;
+    //    if(side == LEFT)
+    //    {
+    //        if (Input.touchCount > 0)
+    //        {
+    //            foreach (var touch in Input.touches)
+    //            {
+    //                if (!TouchedRightSide(touch))
+    //                {
+    //                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+    //                    {
+    //                        // LEFT SIDE WAS LIFTED
+    //                        isLeftPressed = false;
+    //                        return true;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (Input.GetKeyUp(KeyCode.LeftArrow))
+    //            {
+    //                if (DDEBUG) Debug.Log("LeftArrow UP");
+    //                isLeftPressed = false;
+    //                return true;
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        // RIGHT
+    //        if (Input.touchCount > 0)
+    //        {
+    //            foreach (var touch in Input.touches)
+    //            {
+    //                if (TouchedRightSide(touch))
+    //                {
+    //                    // RIGHT SIDE WAS LIFTED
+    //                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+    //                    {
+    //                        isRightPressed = false;
+    //                        return true;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (Input.GetKeyUp(KeyCode.RightArrow))
+    //            {
+    //                if (DDEBUG) Debug.Log("RightArrow UP");
+    //                isRightPressed = false;
+    //                return true;
+    //            }
+    //        }
+    //    }
+
+    //    return false;
+    //}
+
     private void RegisterTouch(bool touch)
     {
-        bool DEBUG_T = true;
+        bool DEBUG_T = false;
         if (touch == LEFT)
         {
+            isLeftPressed = true;
             // Left side was tapped
-            if (DEBUG_T && ScreenIsTapped()) Debug.Log("" + CurrentAction);
+            if (DEBUG_T) Debug.Log("" + Time.time + ": " + CurrentAction);
             switch (CurrentAction)
             {
                 case ActionAbility.Attack:
 
                     break;
-                // DONE
-                case ActionAbility.Boost:
+                case ActionAbility.Boost:   // DONE
                     Boost();
                     break;
                 case ActionAbility.GrapplingHook:
 
                     break;
-                // NOT DONE
-                case ActionAbility.Slide:
+                case ActionAbility.Slide:   // DONE
                     Slide();
                     break;
-                // DONE
-                case ActionAbility.Uppercut:
+                case ActionAbility.Uppercut:    // DONE
                     Uppercut();
                     break;
                 default:
@@ -336,36 +515,47 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            if (DEBUG_T && ScreenIsTapped()) Debug.Log("" + CurrentJump);
+            isRightPressed = true;
+            if (DEBUG_T) Debug.Log("" + Time.time + ": " + CurrentJump);
             // Right side was tapped
             switch (CurrentJump)
             {
-                // DONE
-                case JumpAbility.AirStabilizer:
+                case JumpAbility.AirStabilizer: // DONE
                     StabilizeY();
                     break;
-                case JumpAbility.DiveKick:
+                case JumpAbility.DiveKick:  // DONE
                     DiveKick();
                     break;
-                case JumpAbility.DoubleJump:
+                case JumpAbility.DoubleJump:    // WTF????
+                    DoubleJump();
                     break;
-
-                case JumpAbility.Glider:
-
+                case JumpAbility.Glider:    // DONE
+                    Glide();
                     break;
-                // DONE
-                case JumpAbility.Jump:
+                case JumpAbility.Jump:  // DONE
                     Jump();
                     break;
-                // DONE
-                case JumpAbility.Jetpack:
+                case JumpAbility.Jetpack:   // DONE
                     ActivateJetpack();
                     break;
                 default:
-
+                    if(DEBUG) Debug.Log("RightSide");
                     break;
             }
         }
+    }
+
+    //=== GUI ===//
+
+    void OnGUI()
+    {
+        if (currentScore != null)
+            UpdateScore();
+    }
+
+    void UpdateScore()
+    {
+        currentScore.text = "Distance: " + ((int)transform.position.x + 3) + "m";
     }
 
     /**
