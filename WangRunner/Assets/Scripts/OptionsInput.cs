@@ -4,20 +4,24 @@ using UnityEngine.UI;
 
 public class OptionsInput : MonoBehaviour {
 
+    Slider musicSlider;
 	// Use this for initialization
 	void Start () {
-
-	}
+        musicSlider = GameObject.Find("Music Slider").GetComponent<Slider>();
+        AudioListener.volume = PlayerPrefs.GetFloat("musicVolume", 1);
+        Debug.Log(PlayerPrefs.GetFloat("musicVolume", 100));
+    }
 	
 	// Update is called once per frame
 	void Update () { 
-		GameObject.Find ("Music Slider").GetComponent <Slider> ().value=AudioListener.volume ;
+		musicSlider.value=AudioListener.volume;
+
 	
 	}
 
 	public void PressedCreditsButton()
 	{
-		//todo: go to credits
+        
 		Application.LoadLevel ("CreditsScreen");
 	}
 
@@ -25,25 +29,12 @@ public class OptionsInput : MonoBehaviour {
 	{
 		Application.LoadLevel ("Main Menu");
 	}
-	public void DecVolume()
-	{
-		if (AudioListener.volume > 0) 
-		{
-			AudioListener.volume = (AudioListener.volume - 0.1F);
-		}
-	}
-
-	public void IncVolume()
-	{
-		if (AudioListener.volume < 1) {
-			AudioListener.volume = (AudioListener.volume + 0.1F);
-		}
-	}
 
 	public void SliderChange()
 	{
-		
-		AudioListener.volume = GameObject.Find ("Music Slider").GetComponent <Slider> ().value;
-	}
+		AudioListener.volume = musicSlider.value;
+        PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
+        Debug.Log(PlayerPrefs.GetFloat("musicVolume", 100));
+    }
 
 }
