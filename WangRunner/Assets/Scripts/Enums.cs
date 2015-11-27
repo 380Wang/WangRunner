@@ -1,13 +1,20 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+public enum Ability
+{
+    Action,
+    Jump
+}
+
 public enum ActionAbility{
     None,
     Slide,
     Uppercut,
     Attack,
     Boost,
-    GrapplingHook
+    GrapplingHook,
+    MAX
 }
 
 public enum JumpAbility{
@@ -17,5 +24,6 @@ public enum JumpAbility{
 	Jump,
     Jetpack,
     AirStabilizer,
-    Glider
+    Glider,
+    MAX
 }

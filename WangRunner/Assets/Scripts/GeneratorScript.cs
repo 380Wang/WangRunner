@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class GeneratorScript : MonoBehaviour {
 
+    public GameObject[] attackLevels;
 	public GameObject[] basicLevels;
     public GameObject[] boostLevels;
     public GameObject[] diveKickLevels;
@@ -55,7 +56,7 @@ public class GeneratorScript : MonoBehaviour {
 			float roomStartX = room.transform.position.x - (roomWidth * 0.5f);
 			float roomEndX = roomStartX + roomWidth;
 
-			if( roomStartX > addRoomX )
+			if( roomEndX > addRoomX )
 				addRooms = false;
 
 			if( roomEndX < removeRoomX )
@@ -79,32 +80,40 @@ public class GeneratorScript : MonoBehaviour {
 
         int randomIndex = 0;
 
-        // Left action
-        switch (player.CurrentAction)
+        if (player.CurrentJump != JumpAbility.Jetpack)
         {
-            case ActionAbility.Attack:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[0] = basicLevels[randomIndex];
-                break;
-            case ActionAbility.Boost:
-                randomIndex = Random.Range(0, boostLevels.Length);
-                availableLevels[0] = boostLevels[randomIndex];
-                break;
-            case ActionAbility.GrapplingHook:
-                randomIndex = Random.Range(0, basicLevels.Length);
-                availableLevels[0] = basicLevels[randomIndex];
-                break;
-            case ActionAbility.Slide:
-                randomIndex = Random.Range(0, slideLevels.Length);
-                availableLevels[0] = slideLevels[randomIndex];
-                break;
-            case ActionAbility.Uppercut:
-                randomIndex = Random.Range(0, uppercutLevels.Length);
-                availableLevels[0] = uppercutLevels[randomIndex];
-                break;
-            default:
-                Debug.Log("Oh no...");
-                break;
+            // Left action
+            switch (player.CurrentAction)
+            {
+                case ActionAbility.Attack:
+                    randomIndex = Random.Range(0, attackLevels.Length);
+                    availableLevels[0] = attackLevels[randomIndex];
+                    break;
+                case ActionAbility.Boost:
+                    randomIndex = Random.Range(0, boostLevels.Length);
+                    availableLevels[0] = boostLevels[randomIndex];
+                    break;
+                case ActionAbility.GrapplingHook:
+                    randomIndex = Random.Range(0, basicLevels.Length);
+                    availableLevels[0] = basicLevels[randomIndex];
+                    break;
+                case ActionAbility.Slide:
+                    randomIndex = Random.Range(0, slideLevels.Length);
+                    availableLevels[0] = slideLevels[randomIndex];
+                    break;
+                case ActionAbility.Uppercut:
+                    randomIndex = Random.Range(0, uppercutLevels.Length);
+                    availableLevels[0] = uppercutLevels[randomIndex];
+                    break;
+                default:
+                    Debug.Log("Oh no...");
+                    break;
+            }
+        }
+        else
+        {
+            randomIndex = Random.Range(0, basicLevels.Length);
+            availableLevels[0] = basicLevels[0];
         }
         if (availableLevels[0] == null)
         {
@@ -148,7 +157,7 @@ public class GeneratorScript : MonoBehaviour {
 		float roomWidth = room.transform.Find ("floor").localScale.x;
 		float roomCenter = farthestRoomEndX + (roomWidth * 0.5f);
 
-		room.transform.position = new Vector3 (roomCenter, DefaultFloorY, 0);
+		room.transform.position = new Vector3 (roomCenter - 0.2f, DefaultFloorY, 0);
         //Debug.Log(string.Format("FloorX: {0}, FloorY: {1}, FloorHeight: {2}", farthestRoomEndX, DefaultFloorY, room.transform.Find("floor").localScale.y));
 		currentLevels.Add (room);
 	}
