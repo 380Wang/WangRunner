@@ -6,7 +6,8 @@ public class GeneratorScript : MonoBehaviour {
 
     //this boolean should ONLY be enabled in the title screen so that only basic levels spawn.
     public GameObject[] attackLevels;
-	public bool TitleScreen = false;
+	public bool TutorialMode = false;
+    public bool TitleScreen = false;
 	public GameObject[] basicLevels;
     public GameObject[] boostLevels;
     public GameObject[] diveKickLevels;
@@ -100,7 +101,7 @@ public class GeneratorScript : MonoBehaviour {
 
         int randomIndex = 0;
 
-        if (TitleScreen)
+        if (TutorialMode)
         {
             availableLevels[0] = basicLevels[randomIndex];
             availableLevels[1] = basicLevels[randomIndex];

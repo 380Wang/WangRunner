@@ -48,7 +48,11 @@ public class ShopInput : MonoBehaviour {
             if (PlayerPrefs.GetInt(item) > 0)
             {
                 //remove the item from the list so we can't purchase again
-                Destroy(GameObject.Find(allPurchasableItems[item]));
+                Button purchaseButton = GameObject.Find(allPurchasableItems[item]).GetComponentInChildren<Button>();
+                purchaseButton.onClick.SetPersistentListenerState(0, UnityEngine.Events.UnityEventCallState.Off);
+                Text purchaseButtonText = purchaseButton.GetComponentInChildren<Text>();
+                purchaseButtonText.text = "X";
+                purchaseButtonText.fontSize = 80;
             }
         }
     }

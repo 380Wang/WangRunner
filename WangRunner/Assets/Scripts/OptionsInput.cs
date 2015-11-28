@@ -42,6 +42,8 @@ public class OptionsInput : MonoBehaviour {
 
         PlayerPrefs.SetInt("CurrentCoins", 0);
 
+        PlayerPrefs.SetInt("FirstTimePlaying", 0);
+
         HideMessageBox();
     }
 
