@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     public Transform groundCheckTransformRight;
     public LayerMask groundCheckLayerMask;
     public Text currentScore;
+    public Text debuggerOutput;
     public JumpAbility CurrentJump = JumpAbility.Jump;
     public ActionAbility CurrentAction = ActionAbility.Slide;
 
@@ -45,6 +46,7 @@ public class PlayerController : MonoBehaviour
     private bool diveKickWasted = false;
     private bool actionHappening = false;
     private float dropDistance;
+    private bool slideFix = true;   // Don't worry about it...
 
     private GameObject killzone;
     private bool _isJetpackActive = false;
@@ -55,6 +57,7 @@ public class PlayerController : MonoBehaviour
 
     //===== DEBUG =====//
     private bool DEBUG = false;
+    private bool DEBUG_MOBILE = false;
     //=================//
 
     // Use this for initialization
@@ -68,38 +71,45 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // Register touches
-#if UNITY_ANDROID
-        int tCount = Input.touchCount;
-        if (tCount > 0)
+        if (Application.platform == RuntimePlatform.Android)
         {
-            foreach (var touch in Input.touches)
+            int tCount = Input.touchCount;
+            if (tCount > 0)
             {
-                if (TouchedGameplay(touch))
+                //if (DEBUG_MOBILE) debuggerOutput.text = "Touchcount: " + tCount;
+                foreach (var touch in Input.touches)
                 {
-                    if (TouchedRightSide(touch))
+                    if (TouchedGameplay(touch))
                     {
-                        RegisterTouch(RIGHT);
-                    }
-                    else
-                    {
-                        RegisterTouch(LEFT);
+                        if (TouchedRightSide(touch))
+                        {
+                            RegisterTouch(RIGHT);
+                        }
+                        else
+                        {
+                            RegisterTouch(LEFT);
+                        }
                     }
                 }
             }
+            else
+            {
+                //if (DEBUG_MOBILE) debuggerOutput.text = "tCount <= 0";
+            }
         }
-#endif
-#if UNITY_EDITOR
-        //== FOR DESKTOP: CONTROLS ==//
-        if (Input.GetKey(KeyCode.RightArrow))
+        if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            RegisterTouch(RIGHT);
+            //== FOR DESKTOP: CONTROLS ==//
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                RegisterTouch(RIGHT);
+            }
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                RegisterTouch(LEFT);
+            }
+            //=============================//
         }
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            RegisterTouch(LEFT);
-        }
-        //=============================//
-#endif
         //Debug.Log ("Anchored position: " + (0.0f - titleBar.sizeDelta.y));
     }
 
@@ -130,9 +140,9 @@ public class PlayerController : MonoBehaviour
     **/
     void UpdateAbilityStatus()
     {
-        if (player.velocity.x < movementSpeed) Run();
+        //if (player.velocity.x < movementSpeed) Run();
 
-        if (CurrentJump == JumpAbility.DoubleJump && boostWasted)
+        if (CurrentJump == JumpAbility.DoubleJump && CurrentAction != ActionAbility.Uppercut && boostWasted)
             boostWasted = false;
 
         if (CurrentAction == ActionAbility.Boost && boostCooldown > 0)
@@ -163,6 +173,15 @@ public class PlayerController : MonoBehaviour
         if(CurrentJump == JumpAbility.Jetpack)
         {
             _isJetpackActive = isRightPressed ? true : false;
+        }
+
+        if(CurrentAction == ActionAbility.Slide && !isLeftPressed && !slideFix)
+        {
+            // Player was sliding, bring him back up by size/2 to prevent dropping glitch
+            Vector2 currPos = player.position;
+            currPos.y += 0.5f * player.transform.localScale.x;
+            player.position = currPos;
+            slideFix = true;
         }
 
         if(CurrentAction == ActionAbility.Uppercut && boostCooldown > 0)
@@ -376,9 +395,11 @@ public class PlayerController : MonoBehaviour
     {
         // Drop player to slide
         // (Get the size of box -> decrease position y by size/2)
+        if (DEBUG_MOBILE) debuggerOutput.text = "" + Time.time + ": slide()";
         if (ScreenIsTapped())
         {
-            dropDistance = 0.5f * transform.localScale.x;
+            slideFix = false;
+            dropDistance = 0.5f * player.transform.localScale.x;
             Vector2 currPos = player.position;
             currPos.y -= dropDistance;
 
@@ -397,7 +418,7 @@ public class PlayerController : MonoBehaviour
 
     void StabilizeY()
     {
-        if (isFirstTouch && ScreenIsTapped())
+        if (ScreenIsTapped() && isFirstTouch)
         {
             isFirstTouch = false;
             Jump();
@@ -405,8 +426,9 @@ public class PlayerController : MonoBehaviour
         else if(!isFirstTouch && !grounded)
         {
             Vector3 currVelo = player.velocity;
-            currVelo.y = 0.6f;
+            currVelo.y = 0.65f;
             player.velocity = currVelo;
+            Run();
         }
     }
 
@@ -524,40 +546,46 @@ public class PlayerController : MonoBehaviour
     void TrackTouch()
     {
         bool DDEBUG = false;
-#if UNITY_ANDROID
-        if(Input.touchCount > 0)
+        if (Application.platform == RuntimePlatform.Android)
         {
-            foreach (var touch in Input.touches)
+            if (Input.touchCount > 0)
             {
-                if (!TouchedRightSide(touch))
+                foreach (var touch in Input.touches)
                 {
-                    if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    if (!TouchedRightSide(touch))
                     {
-                        isLeftPressed = false;
+                        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                        {
+                            isLeftPressed = false;
+                        }
                     }
-                }
-                else
-                {
-                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    else
                     {
-                        isRightPressed = false;
+                        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                        {
+                            isRightPressed = false;
+                        }
                     }
                 }
             }
+            else
+            {
+                isLeftPressed = isRightPressed = false;
+            }
         }
-#endif
-#if UNITY_EDITOR
-        if (!Input.GetKey(KeyCode.LeftArrow))
+        if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            if (DDEBUG) Debug.Log("LeftArrow UP");
-            isLeftPressed = false;
+            if (!Input.GetKey(KeyCode.LeftArrow))
+            {
+                if (DDEBUG) Debug.Log("LeftArrow UP");
+                isLeftPressed = false;
+            }
+            if (!Input.GetKey(KeyCode.RightArrow))
+            {
+                if (DDEBUG) Debug.Log("RightArrow UP");
+                isRightPressed = false;
+            }
         }
-        if (!Input.GetKey(KeyCode.RightArrow))
-        {
-            if (DDEBUG) Debug.Log("RightArrow UP");
-            isRightPressed = false;
-        }
-#endif
     }
     
     /**
