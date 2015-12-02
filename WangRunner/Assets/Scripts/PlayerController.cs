@@ -472,6 +472,11 @@ public class PlayerController : MonoBehaviour
         {
             UpdatePowerup(collider);
         }
+        
+        if (collider.CompareTag("Coin"))
+        {
+            Destroy(collider.gameObject);
+        }
     }
 
     void UpdatePowerup(Collider2D powerup)

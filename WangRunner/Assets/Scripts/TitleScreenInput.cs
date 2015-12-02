@@ -4,6 +4,10 @@ using UnityEngine.UI;
 
 public class TitleScreenInput : MonoBehaviour
 {
+    public Text ActionAbilityText;
+
+    public Text JumpAbilityText;
+
     //the amount of time that's passed
     float elapsedTime = 0;
 
@@ -17,6 +21,7 @@ public class TitleScreenInput : MonoBehaviour
 
     GameObject tutorialOverlay;
     GameObject titleTextGroup;
+
     GeneratorScript levelGen;
 
     public GameObject basicJumpLevel;
@@ -31,6 +36,11 @@ public class TitleScreenInput : MonoBehaviour
 
         levelGen = GameObject.Find("Player").GetComponent<GeneratorScript>();
         
+        if(Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+        {
+            ActionAbilityText.text = "Press Left to use your action ability (currently slide).";
+            JumpAbilityText.text = "Press Right to use your jump ability (currently basic jump)";
+        }
     }
 
     public void TransitionToMainMenu()
