@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class BoostObstacleHandler : MonoBehaviour {
     public float closeSpeedFactor = 1.0f;
@@ -8,12 +7,14 @@ public class BoostObstacleHandler : MonoBehaviour {
     private float bottomObstacleBeginY;
     private float startingDistance;
     private float currDistance;
+    private float minGapDistance;
     private bool openGap = true;
 
     Transform topObstacle;
     Transform bottomObstacle;
     Transform topObstacleEdge;
     Transform bottomObstacleEdge;
+    float playerHeight;
 
 	// Use this for initialization
 	void Start () {
@@ -24,6 +25,9 @@ public class BoostObstacleHandler : MonoBehaviour {
         topObstacleBeginY = topObstacleEdge.position.y;
         bottomObstacleBeginY = bottomObstacleEdge.position.y;
         startingDistance = topObstacleBeginY - bottomObstacleBeginY;
+
+        playerHeight = GameObject.FindGameObjectWithTag("Player").transform.localScale.y;
+        minGapDistance = playerHeight;
 	}
 	
 	void FixedUpdate () {
@@ -32,7 +36,7 @@ public class BoostObstacleHandler : MonoBehaviour {
         if (openGap)
         {
             CloseGap();
-            if(currDistance <= 0)
+            if(currDistance <= minGapDistance)
             {
                 openGap = false;
             }
@@ -50,20 +54,20 @@ public class BoostObstacleHandler : MonoBehaviour {
     void CloseGap()
     {
         Vector3 topObstaclePosition = topObstacle.position;
-        topObstaclePosition.y -= 0.02f * closeSpeedFactor;
+        topObstaclePosition.y -= 0.01f * closeSpeedFactor;
         topObstacle.position = topObstaclePosition;
         Vector3 bottomObstaclePosition = bottomObstacle.position;
-        bottomObstaclePosition.y += 0.02f * closeSpeedFactor;
+        bottomObstaclePosition.y += 0.01f * closeSpeedFactor;
         bottomObstacle.position = bottomObstaclePosition;
     }
 
     void OpenGap()
     {
         Vector3 topObstaclePosition = topObstacle.position;
-        topObstaclePosition.y += 0.02f * closeSpeedFactor;
+        topObstaclePosition.y += 0.01f * closeSpeedFactor;
         topObstacle.position = topObstaclePosition;
         Vector3 bottomObstaclePosition = bottomObstacle.position;
-        bottomObstaclePosition.y -= 0.02f * closeSpeedFactor;
+        bottomObstaclePosition.y -= 0.01f * closeSpeedFactor;
         bottomObstacle.position = bottomObstaclePosition;
     }
 }

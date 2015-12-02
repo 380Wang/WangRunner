@@ -13,30 +13,69 @@ public class TitleScreenInput : MonoBehaviour
     //the flashing text in the title screen
     public Text tapText;
 
+    bool tutorialEnabled = false;
+
+    GameObject tutorialOverlay;
+    GameObject titleTextGroup;
+    GeneratorScript levelGen;
+
+    public GameObject basicJumpLevel;
 
     void Start()
     {
         //AudioSource.PlayClipAtPoint(GetComponent<AudioSource>().clip, new Vector3(0, 0, 0));
+        tutorialOverlay = GameObject.Find("Tutorial");
+        tutorialOverlay.SetActive(false);
+
+        titleTextGroup = GameObject.Find("TitleTextGroup");
+
+        levelGen = GameObject.Find("Player").GetComponent<GeneratorScript>();
+        
+    }
+
+    public void TransitionToMainMenu()
+    {
+        Application.LoadLevel("Main Menu");
+        PlayerPrefs.SetInt("FirstTimePlaying", 1);
     }
 
     void Update()
     {
-        //keeping track of how much time has passed
-        elapsedTime += Time.deltaTime;
 
+        if (!tutorialEnabled)
+        {
+            //keeping track of how much time has passed
+            elapsedTime += Time.deltaTime;
 
-        //has the amount of time passed to flash the thing?
-        if (elapsedTime >= flashTime)
-        {
-            //reset the amount of time that's been used
-            elapsedTime = 0;
-            //disable/enable the text to flash it
-            tapText.gameObject.SetActive(!tapText.gameObject.activeSelf);
+            //has the amount of time passed to flash the thing?
+            if (elapsedTime >= flashTime)
+            {
+                //reset the amount of time that's been used
+                elapsedTime = 0;
+                //disable/enable the text to flash it
+                tapText.gameObject.SetActive(!tapText.gameObject.activeSelf);
+            }
+
+            //did the player tap anywhere on the screen? then swap to the maingame scene
+            if ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) || Input.GetMouseButtonDown(0))
+            {
+                //if it's the person's first time playing, they should learn the basic controls
+                if (PlayerPrefs.GetInt("FirstTimePlaying", 0) == 0)
+                {
+                    tutorialOverlay.SetActive(true);
+                    tutorialEnabled = true;
+                    titleTextGroup.SetActive(false);
+
+                    levelGen.basicLevels[0] = basicJumpLevel;
+                }
+                else
+                {
+                    //otherwise just play the game
+                    TransitionToMainMenu();
+                }
+
+            }
         }
-        //did the player tap anywhere on the screen? then swap to the maingame scene
-        if ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) || Input.GetMouseButtonDown(0))
-        {
-            Application.LoadLevel("Main Menu");
-        }
+       
     }
 }

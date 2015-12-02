@@ -6,17 +6,21 @@ using UnityEngine.UI;
 public class PlayerController : MonoBehaviour
 {
     public float boostForce = 6.0f;
+    public float boostDuration = 3.0f;
     public float diveKickForce = 6.0f;
+    public float diveKickDuration = 3.0f;
     public float movementSpeed = 3.0f;
     public float jumpForce = 200.0f;
     public float jetpackForce = 100.0f;
     public float glideFallFactor = 1.0f;
     public float uppercutForce = 12.0f;
+    public float uppercutDuration = 3.0f;
 
     public Transform groundCheckTransformLeft;
     public Transform groundCheckTransformRight;
     public LayerMask groundCheckLayerMask;
     public Text currentScore;
+    public Text debuggerOutput;
     public JumpAbility CurrentJump = JumpAbility.Jump;
     public ActionAbility CurrentAction = ActionAbility.Slide;
 
@@ -27,97 +31,171 @@ public class PlayerController : MonoBehaviour
     private bool isRightPressed = false;
     private bool isBoosting = false;
     private bool isDiveKicking = false;
+    private bool isSingleJumping = false;
     private bool isJumping = false;
     private bool isStabilizing = false;
     private bool isSliding = false;
     private bool isUppercutting = false;
     private Rigidbody2D player;
-    private float clickDelay;
-    private float clickDelay2;
+    private float clickDelay = 0;
+    private float doubleJumpCooldown = 0;
+    private float attackCooldown = 0;
+    private float boostCooldown = 0;
+    private float diveKickCooldown = 0;
+    private bool boostWasted = false;   // Used by Boost and Uppercut
+    private bool diveKickWasted = false;
     private bool actionHappening = false;
     private float dropDistance;
+    private bool slideFix = true;   // Don't worry about it...
+
+    private GameObject killzone;
+    private bool _isJetpackActive = false;
+    public bool isJetpackActive
+    {
+        get { return _isJetpackActive; }
+    }
 
     //===== DEBUG =====//
     private bool DEBUG = false;
+    private bool DEBUG_MOBILE = false;
     //=================//
 
     // Use this for initialization
     void Start()
     {
         player = GetComponent<Rigidbody2D>();
-        // Click delay hack
-        clickDelay = 0.04f;
-        clickDelay2 = 0.04f;
+        killzone = GameObject.Find("Killzone");
     }
-
 
     // Update is called once per frame
     void Update()
     {
+        // Register touches
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            int tCount = Input.touchCount;
+            if (tCount > 0)
+            {
+                //if (DEBUG_MOBILE) debuggerOutput.text = "Touchcount: " + tCount;
+                foreach (var touch in Input.touches)
+                {
+                    if (TouchedGameplay(touch))
+                    {
+                        if (TouchedRightSide(touch))
+                        {
+                            RegisterTouch(RIGHT);
+                        }
+                        else
+                        {
+                            RegisterTouch(LEFT);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //if (DEBUG_MOBILE) debuggerOutput.text = "tCount <= 0";
+            }
+        }
+        if (Application.platform == RuntimePlatform.WindowsEditor)
+        {
+            //== FOR DESKTOP: CONTROLS ==//
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                RegisterTouch(RIGHT);
+            }
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                RegisterTouch(LEFT);
+            }
+            //=============================//
+        }
         //Debug.Log ("Anchored position: " + (0.0f - titleBar.sizeDelta.y));
     }
 
     void FixedUpdate()
     {
 
-        Run();
+        //Run();
         
         // Click delay hack to prevent accidental double jumps
         clickDelay -= Time.fixedDeltaTime;
-        if (CurrentJump == JumpAbility.DoubleJump) clickDelay2 -= Time.fixedDeltaTime;
+        if (clickDelay < 0) clickDelay = 0;
 
-        //== FOR DESKTOP: CONTROLS ==//
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            RegisterTouch(RIGHT);
-        }
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            RegisterTouch(LEFT);
-        }
-        //=============================//
+        // Cooldowns and shit
+        if (CurrentJump == JumpAbility.DoubleJump) doubleJumpCooldown -= Time.fixedDeltaTime;
+        if (doubleJumpCooldown < 0) doubleJumpCooldown = 0;
 
-        // Register touches
-        int tCount = Input.touchCount;
-        if (tCount > 0)
-        {
-            foreach (var touch in Input.touches)
-            {
-                if (TouchedGameplay(touch))
-                {
-                    if (TouchedRightSide(touch))
-                    {
-                        RegisterTouch(RIGHT);
-                    }
-                    else
-                    {
-                        RegisterTouch(LEFT);
-                    }
-                }
-            }
-        }
+        if (CurrentAction == ActionAbility.Attack) attackCooldown -= Time.fixedDeltaTime;
+        if (attackCooldown < 0) attackCooldown = 0;
 
+        // Recurring checks
         TrackTouch();
         UpdateAbilityStatus();
         UpdateGroundedStatus();
     }
 
-    bool Sliding()
-    {
-        return actionHappening && ScreenIsHeld(true);
-    }
-
-    bool JustGrounded
-    {
-        //are we grounded now but last frame we weren't grounded?
-        get
-        {
-            return grounded && !lastGrounded;
-        }
-    }
-
+    /**
+    * The heart and core of most abilities
+    **/
     void UpdateAbilityStatus()
     {
+        //if (player.velocity.x < movementSpeed) Run();
+
+        if (CurrentJump == JumpAbility.DoubleJump && CurrentAction != ActionAbility.Uppercut && boostWasted)
+            boostWasted = false;
+
+        if (CurrentAction == ActionAbility.Boost && boostCooldown > 0)
+        {
+            boostWasted = true;
+            Vector2 boostVelo = player.velocity;
+            boostVelo.x += 0.1f * boostForce;
+            player.velocity = boostVelo;
+            boostCooldown -= Time.fixedDeltaTime;
+        }
+        else if(CurrentAction == ActionAbility.Boost)
+        {
+            Reset();
+        }
+
+        if(CurrentJump == JumpAbility.DiveKick && diveKickCooldown > 0)
+        {
+            diveKickWasted = true;
+            player.velocity = new Vector2(diveKickForce, -1.0f * diveKickForce);
+            player.rotation = 45;
+            diveKickCooldown -= Time.fixedDeltaTime;
+        }
+        else if(CurrentJump == JumpAbility.DiveKick && !isLeftPressed)
+        {
+            Reset();
+        }
+
+        if(CurrentJump == JumpAbility.Jetpack)
+        {
+            _isJetpackActive = isRightPressed ? true : false;
+        }
+
+        if(CurrentAction == ActionAbility.Slide && !isLeftPressed && !slideFix)
+        {
+            // Player was sliding, bring him back up by size/2 to prevent dropping glitch
+            Vector2 currPos = player.position;
+            currPos.y += 0.5f * player.transform.localScale.x;
+            player.position = currPos;
+            slideFix = true;
+        }
+
+        if(CurrentAction == ActionAbility.Uppercut && boostCooldown > 0)
+        {
+            boostWasted = true;
+            player.velocity = new Vector2(uppercutForce, uppercutForce);
+            player.rotation = -45;
+            boostCooldown -= Time.fixedDeltaTime;
+        }
+        else if(CurrentAction == ActionAbility.Uppercut)
+        {
+            Reset();
+        }
+
         if(!isLeftPressed && !isRightPressed)
         {
             Reset();
@@ -134,6 +212,9 @@ public class PlayerController : MonoBehaviour
                 case JumpAbility.AirStabilizer:
                     isJumping = false;
                     isStabilizing = false;
+                    break;
+                case JumpAbility.Jetpack:
+                    _isJetpackActive = false;
                     break;
                 default:
                     break;
@@ -183,7 +264,7 @@ public class PlayerController : MonoBehaviour
 
                     break;
                 case JumpAbility.Jetpack:
-
+                    _isJetpackActive = true;
                     break;
                 case JumpAbility.Jump:
                     isJumping = true;
@@ -196,13 +277,14 @@ public class PlayerController : MonoBehaviour
 
     void UpdateGroundedStatus()
     {
-        lastGrounded = grounded;
-
-        grounded = Physics2D.OverlapCircle(groundCheckTransformLeft.position, 0.1f, groundCheckLayerMask) || Physics2D.OverlapCircle(groundCheckTransformRight.position, 0.1f, groundCheckLayerMask);
+        grounded = Physics2D.OverlapCircle(groundCheckTransformLeft.position, 0.01f, groundCheckLayerMask) || Physics2D.OverlapCircle(groundCheckTransformRight.position, 0.01f, groundCheckLayerMask);
         if(grounded)
         {
-            if(CurrentJump == JumpAbility.DiveKick && !isLeftPressed) player.rotation = 0;
             isFirstTouch = true;    // Should always be true upon grounded, so he can jump
+            if (CurrentJump == JumpAbility.DiveKick && !isLeftPressed) player.rotation = 0;
+            boostWasted = false;
+            diveKickWasted = false;
+            //Debug.Log("boostWasted = false");
         }
 
         if (Time.time % 1 == 0)
@@ -211,53 +293,85 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void Attack()
+    {
+        if(ScreenIsTapped() && attackCooldown <= 0)
+        {
+            attackCooldown = 1.0f;
+            GameObject nextDestroyableObstacle = FindNearestDestroyable(transform.position);
+            if(nextDestroyableObstacle != null && Vector2.Distance(killzone.transform.position, nextDestroyableObstacle.transform.position) <= 1.0f)
+            {
+                Debug.Log("Destroy obstacle!");
+                nextDestroyableObstacle.SetActive(false);
+            }
+        }
+    }
+
+    /**
+    * Finds the nearest "DestroyableObstacle" tagged gameobject
+    **/
+    GameObject FindNearestDestroyable(Vector2 currPosition)
+    {
+        GameObject closest = null;
+
+        // Place all destroyable objects into an array and search for the nearest one
+        GameObject[] destroyables = GameObject.FindGameObjectsWithTag("DestroyableObstacle");
+        float nextObjDistance = Mathf.Infinity;
+
+        foreach(var obstacle in destroyables)
+        {
+            float objDistance = Vector2.Distance(currPosition, obstacle.transform.position);
+            if(objDistance < nextObjDistance)
+            {
+                nextObjDistance = objDistance;
+                closest = obstacle;
+            }
+        }
+
+        return closest;
+    }
+
     void Boost()
     {
-        Vector2 boostVelo = player.velocity;
-        boostVelo.x += boostForce;
-        player.velocity = boostVelo;
+        if (ScreenIsTapped() && isLeftPressed && !boostWasted && boostCooldown <= 0)
+        {
+            //boostWasted = true;
+            boostCooldown = 0.02f * boostDuration;
+            //player.AddForce(new Vector2(boostForce, 0));
+        }
     }
 
     void DiveKick()
     {
-        if (isFirstTouch && ScreenIsTapped())
+        if (grounded && ScreenIsTapped() && isRightPressed)
         {
             isFirstTouch = false;
             Jump();
             //Debug.Log("Dive...");
         }
         //did we just tap the screen for the second time?
-        else if (!isFirstTouch && isRightPressed)
+        else if (!grounded && ScreenIsTapped() && isRightPressed && !diveKickWasted)
         {
             //Debug.Log("Kick!");
-            //isFirstTouch = true;
-            Vector3 diveVelo = player.velocity;
-            diveVelo.x = diveKickForce;
-            diveVelo.y = -1.0f * diveKickForce;
-            player.velocity = diveVelo;
-            player.rotation = 45;
+            diveKickCooldown = 0.02f * diveKickDuration;
         }
     }
 
     void DoubleJump()
     {
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        if (ScreenIsTapped() && isRightPressed && grounded)
         {
-            Debug.Log("Grounded: " + grounded + "isFirstTouch: " + isFirstTouch);
-            if (isFirstTouch)
+            Jump();
+            isSingleJumping = true;
+        }
+        else if (ScreenIsTapped() && isRightPressed && !grounded)
+        {
+            if(isSingleJumping && doubleJumpCooldown <= 0)
             {
-                this.Jump();
-                isFirstTouch = false;
-            }
-            else if (!isFirstTouch && !grounded)
-            {
-                Debug.Log("DoubleJumping");
-                isFirstTouch = true;
-                if (clickDelay2 <= 0)
-                {
-                    clickDelay2 = 0.04f;
-                    player.AddForce(new Vector2(0, jumpForce));
-                }
+                doubleJumpCooldown = 0.04f;
+                isSingleJumping = false;
+                player.velocity = new Vector2(movementSpeed, 0);
+                player.AddForce(new Vector2(0, jumpForce));
             }
         }
     }
@@ -272,7 +386,7 @@ public class PlayerController : MonoBehaviour
         else if (!isFirstTouch && isRightPressed)
         {
             Vector2 glideVelo = player.velocity;
-            glideVelo.y = -1.0f * glideFallFactor;
+            glideVelo.y = -0.2f * glideFallFactor;
             player.velocity = glideVelo;
         }
     }
@@ -281,15 +395,17 @@ public class PlayerController : MonoBehaviour
     {
         // Drop player to slide
         // (Get the size of box -> decrease position y by size/2)
+        if (DEBUG_MOBILE) debuggerOutput.text = "" + Time.time + ": slide()";
         if (ScreenIsTapped())
         {
-            dropDistance = 0.5f * transform.localScale.x;
+            slideFix = false;
+            dropDistance = 0.5f * player.transform.localScale.x;
             Vector2 currPos = player.position;
             currPos.y -= dropDistance;
 
             player.position = currPos;
-            player.rotation = 90;
         }
+        player.rotation = 90;
         //actionHappening = true;
 
         /*
@@ -302,49 +418,84 @@ public class PlayerController : MonoBehaviour
 
     void StabilizeY()
     {
-        if (isFirstTouch && ScreenIsTapped())
+        if (ScreenIsTapped() && isFirstTouch)
         {
             isFirstTouch = false;
             Jump();
         }
         else if(!isFirstTouch && !grounded)
         {
-            //Debug.Log("Stabilizing Y");
             Vector3 currVelo = player.velocity;
-            currVelo.y = 0.6f;
+            currVelo.y = 0.65f;
             player.velocity = currVelo;
+            Run();
         }
     }
 
     void Uppercut()
     {
-        player.velocity = new Vector2(uppercutForce, uppercutForce);
-        player.rotation = -45;
-        //actionHappening = true;
+        if (ScreenIsTapped() && !boostWasted)
+        {
+            //boostWasted = true;
+            boostCooldown = 0.02f * uppercutDuration;
+        }
     }
 
     void Jump()
     {
+        //Debug.Log("" + Time.time + " RUNNING JUMP()");
         if (ScreenIsTapped())
         {
+            //Debug.Log("<color=blue>" + Time.time + " SCREENISTAPPED()</color>");
             if (grounded && clickDelay <= 0)
             {
                 clickDelay = 0.04f;
                 player.AddForce(new Vector2(0, jumpForce));
+                //Debug.Log("" + Time.time + ": JUMPING!!!!!");
                 //actionHappening = false;
             }
         }
     }
 
+    /**
+    * Only adds jetpack force. See Jetpack.cs for jetpack properties.
+    **/
     void ActivateJetpack()
     {
         player.AddForce(new Vector2(0, jetpackForce));
     }
 
+    void OnTriggerEnter2D(Collider2D collider)
+    {
+        // Powerup obtained
+        if (collider.CompareTag("Powerup"))
+        {
+            UpdatePowerup(collider);
+        }
+    }
+
+    void UpdatePowerup(Collider2D powerup)
+    {
+        PowerupAbility obtainedPowerup = powerup.GetComponent<PowerupAbility>();
+        if (obtainedPowerup.abilityType == Ability.Jump)
+        {
+            CurrentJump = obtainedPowerup.jumpAbility;
+        }
+        else
+        {
+            CurrentAction = obtainedPowerup.actionAbility;
+        }
+        Destroy(powerup.gameObject);
+    }
+
     void Reset()
     {
-        player.rotation = 0;
-        Run();
+        //Debug.Log("Reset");
+        if (boostCooldown <= 0 && diveKickCooldown <= 0)
+        {
+            player.rotation = 0;
+            Run();
+        }
     }
 
     /**
@@ -372,10 +523,16 @@ public class PlayerController : MonoBehaviour
     }
 
     /**
-     * Check for taps and not held down
+     * Check for taps and not held down (Input.GetKeyDown() rather than Input.GetKey())
      **/
     bool ScreenIsTapped()
     {
+        //Debug.Log("<color=orange>Checking if screenIsTapped</color>");
+        //if (Input.GetKeyDown(KeyCode.LeftArrow)) return true;
+        //if (Input.GetKeyDown(KeyCode.RightArrow)) return true;
+
+        //return false;
+
         // In Android:
         // First finger = MouseButtonDown(0)
         // Second finger = MouseButtonDown(1)
@@ -383,134 +540,87 @@ public class PlayerController : MonoBehaviour
             || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow);
     }
 
+    /**
+    * Updates the value of isLeftPressed and isRightPressed (self explanatory boolean variables)
+    **/
     void TrackTouch()
     {
         bool DDEBUG = false;
-        if(Input.touchCount > 0)
+        if (Application.platform == RuntimePlatform.Android)
         {
-            foreach (var touch in Input.touches)
+            if (Input.touchCount > 0)
             {
-                if (!TouchedRightSide(touch))
+                foreach (var touch in Input.touches)
                 {
-                    if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    if (!TouchedRightSide(touch))
                     {
-                        isLeftPressed = false;
-                        //return true;
+                        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                        {
+                            isLeftPressed = false;
+                        }
                     }
-                }
-                else
-                {
-                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                    else
                     {
-                        isRightPressed = false;
-                        //return true;
+                        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+                        {
+                            isRightPressed = false;
+                        }
                     }
                 }
             }
+            else
+            {
+                isLeftPressed = isRightPressed = false;
+            }
         }
-        if (!Input.GetKey(KeyCode.LeftArrow))
+        if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            if (DDEBUG) Debug.Log("LeftArrow UP");
-            isLeftPressed = false;
+            if (!Input.GetKey(KeyCode.LeftArrow))
+            {
+                if (DDEBUG) Debug.Log("LeftArrow UP");
+                isLeftPressed = false;
+            }
+            if (!Input.GetKey(KeyCode.RightArrow))
+            {
+                if (DDEBUG) Debug.Log("RightArrow UP");
+                isRightPressed = false;
+            }
         }
-        if (!Input.GetKey(KeyCode.RightArrow))
-        {
-            if (DDEBUG) Debug.Log("RightArrow UP");
-            isRightPressed = false;
-        }
-        
     }
-
-    //bool FingerLifted(bool side)
-    //{
-    //    bool DDEBUG = true;
-    //    if(side == LEFT)
-    //    {
-    //        if (Input.touchCount > 0)
-    //        {
-    //            foreach (var touch in Input.touches)
-    //            {
-    //                if (!TouchedRightSide(touch))
-    //                {
-    //                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
-    //                    {
-    //                        // LEFT SIDE WAS LIFTED
-    //                        isLeftPressed = false;
-    //                        return true;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        else
-    //        {
-    //            if (Input.GetKeyUp(KeyCode.LeftArrow))
-    //            {
-    //                if (DDEBUG) Debug.Log("LeftArrow UP");
-    //                isLeftPressed = false;
-    //                return true;
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        // RIGHT
-    //        if (Input.touchCount > 0)
-    //        {
-    //            foreach (var touch in Input.touches)
-    //            {
-    //                if (TouchedRightSide(touch))
-    //                {
-    //                    // RIGHT SIDE WAS LIFTED
-    //                    if(Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
-    //                    {
-    //                        isRightPressed = false;
-    //                        return true;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        else
-    //        {
-    //            if (Input.GetKeyUp(KeyCode.RightArrow))
-    //            {
-    //                if (DDEBUG) Debug.Log("RightArrow UP");
-    //                isRightPressed = false;
-    //                return true;
-    //            }
-    //        }
-    //    }
-
-    //    return false;
-    //}
-
+    
+    /**
+    * Performs action based on left or right touch
+    **/
     private void RegisterTouch(bool touch)
     {
         bool DEBUG_T = false;
         if (touch == LEFT)
         {
+            if(CurrentJump != JumpAbility.Jetpack) {
             isLeftPressed = true;
             // Left side was tapped
             if (DEBUG_T) Debug.Log("" + Time.time + ": " + CurrentAction);
-            switch (CurrentAction)
-            {
-                case ActionAbility.Attack:
+                switch (CurrentAction)
+                {
+                    case ActionAbility.Attack:
+                        Attack();
+                        break;
+                    case ActionAbility.Boost:   // DONE
+                        Boost();
+                        break;
+                    case ActionAbility.GrapplingHook:
 
-                    break;
-                case ActionAbility.Boost:   // DONE
-                    Boost();
-                    break;
-                case ActionAbility.GrapplingHook:
-
-                    break;
-                case ActionAbility.Slide:   // DONE
-                    Slide();
-                    break;
-                case ActionAbility.Uppercut:    // DONE
-                    Uppercut();
-                    break;
-                default:
-                    if (DEBUG_T) Debug.Log("LeftSide");
-                    break;
+                        break;
+                    case ActionAbility.Slide:   // DONE
+                        Slide();
+                        break;
+                    case ActionAbility.Uppercut:    // DONE
+                        Uppercut();
+                        break;
+                    default:
+                        if (DEBUG_T) Debug.Log("Left touch error");
+                        break;
+                }
             }
         }
         else
@@ -526,7 +636,7 @@ public class PlayerController : MonoBehaviour
                 case JumpAbility.DiveKick:  // DONE
                     DiveKick();
                     break;
-                case JumpAbility.DoubleJump:    // WTF????
+                case JumpAbility.DoubleJump:    // DONE
                     DoubleJump();
                     break;
                 case JumpAbility.Glider:    // DONE
@@ -539,7 +649,7 @@ public class PlayerController : MonoBehaviour
                     ActivateJetpack();
                     break;
                 default:
-                    if(DEBUG) Debug.Log("RightSide");
+                    if(DEBUG_T) Debug.Log("Right touch error");
                     break;
             }
         }
