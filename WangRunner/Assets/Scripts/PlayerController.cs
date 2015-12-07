@@ -48,6 +48,19 @@ public class PlayerController : MonoBehaviour
     private float dropDistance;
     private bool slideFix = true;   // Don't worry about it...
 
+
+	public AudioClip coinFx;
+	public AudioClip deathFx;
+	public AudioClip jumpFx;
+	public AudioClip attackFx;
+	public AudioClip slideFx;
+	public AudioClip jetpackFx;
+	public AudioClip boostFx;
+	public AudioClip gliderFx;
+
+
+
+
     private GameObject killzone;
     private bool _isJetpackActive = false;
     public bool isJetpackActive
@@ -303,6 +316,7 @@ public class PlayerController : MonoBehaviour
             {
                 Debug.Log("Destroy obstacle!");
                 nextDestroyableObstacle.SetActive(false);
+
             }
         }
     }
@@ -388,6 +402,7 @@ public class PlayerController : MonoBehaviour
             Vector2 glideVelo = player.velocity;
             glideVelo.y = -0.2f * glideFallFactor;
             player.velocity = glideVelo;
+	
         }
     }
 
@@ -446,6 +461,7 @@ public class PlayerController : MonoBehaviour
         //Debug.Log("" + Time.time + " RUNNING JUMP()");
         if (ScreenIsTapped())
         {
+				
             //Debug.Log("<color=blue>" + Time.time + " SCREENISTAPPED()</color>");
             if (grounded && clickDelay <= 0)
             {
@@ -453,6 +469,7 @@ public class PlayerController : MonoBehaviour
                 player.AddForce(new Vector2(0, jumpForce));
                 //Debug.Log("" + Time.time + ": JUMPING!!!!!");
                 //actionHappening = false;
+
             }
         }
     }
