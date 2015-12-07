@@ -316,6 +316,7 @@ public class PlayerController : MonoBehaviour
             {
                 Debug.Log("Destroy obstacle!");
                 nextDestroyableObstacle.SetActive(false);
+				SoundManager.instance.PlaySingle(attackFx);
 
             }
         }
@@ -352,6 +353,7 @@ public class PlayerController : MonoBehaviour
             //boostWasted = true;
             boostCooldown = 0.02f * boostDuration;
             //player.AddForce(new Vector2(boostForce, 0));
+			SoundManager.instance.PlaySingle(boostFx);
         }
     }
 
@@ -402,6 +404,7 @@ public class PlayerController : MonoBehaviour
             Vector2 glideVelo = player.velocity;
             glideVelo.y = -0.2f * glideFallFactor;
             player.velocity = glideVelo;
+
 	
         }
     }
@@ -469,6 +472,7 @@ public class PlayerController : MonoBehaviour
                 player.AddForce(new Vector2(0, jumpForce));
                 //Debug.Log("" + Time.time + ": JUMPING!!!!!");
                 //actionHappening = false;
+				SoundManager.instance.PlaySingle(jumpFx);
 
             }
         }
