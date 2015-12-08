@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System;
 
-public class PowerupAbility : MonoBehaviour {
+public class PowerupAbility : MonoBehaviour
+{
 
     ActionAbility _actionAbility;
     public ActionAbility actionAbility
@@ -23,21 +26,65 @@ public class PowerupAbility : MonoBehaviour {
 
     void Awake()
     {
-        chosenAbility = (Ability)Random.Range((int)Ability.Action, (int)Ability.Jump + 1);
+        List<JumpAbility> purchasedJumps = new List<JumpAbility>();
+        purchasedJumps.Add(JumpAbility.Jump);
+        purchasedJumps.Add(JumpAbility.DoubleJump);
+
+
+        List<ActionAbility> purchasedActions = new List<ActionAbility>();
+        purchasedActions.Add(ActionAbility.Slide);
+
+        purchasedActions.Add(ActionAbility.Attack);
+
+        string[] jumpAbilities =
+        {
+            "Glider",
+            "AirStabilizer",
+            "DiveKick",
+            "Jetpack",
+        };
+
+        string[] actionAbilities =
+        {
+            "GrapplingHook",
+            "Boost",
+            "Uppercut",
+        };
+
+        for (int i = 0; i < jumpAbilities.Length; i++)
+        {
+            if(PlayerPrefs.GetInt(jumpAbilities[i]) != 0)
+            {
+                purchasedJumps.Add((JumpAbility)Enum.Parse(typeof(JumpAbility), jumpAbilities[i]));
+            }
+        }
+
+        for (int i = 0; i < actionAbilities.Length; i++)
+        {
+            if (PlayerPrefs.GetInt(actionAbilities[i]) != 0)
+            {
+                purchasedActions.Add((ActionAbility)Enum.Parse(typeof(ActionAbility), actionAbilities[i]));
+            }
+        }
+
+        chosenAbility = (Ability)UnityEngine.Random.Range((int)Ability.Action, (int)Ability.Jump + 1);
         if (chosenAbility == Ability.Jump)
         {
-            int randomIndex = Random.Range(1, (int)JumpAbility.MAX);
-            _jumpAbility = (JumpAbility)randomIndex;
+            int randomIndex = UnityEngine.Random.Range(0, purchasedJumps.Count);
+            _jumpAbility = purchasedJumps[randomIndex];
         }
         else
         {
-            int randomIndex = Random.Range(1, (int)ActionAbility.MAX);
-            _actionAbility = (ActionAbility)randomIndex;
+            int randomIndex = UnityEngine.Random.Range(0, purchasedActions.Count);
+            _actionAbility = purchasedActions[randomIndex];
         }
+
+
     }
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
 
         switch (_actionAbility)
@@ -58,7 +105,7 @@ public class PowerupAbility : MonoBehaviour {
                 spriteRenderer.sprite = Resources.Load<Sprite>("Powerups/PU_Uppercut");
                 break;
             default:
-                
+
                 break;
         }
 
@@ -83,13 +130,14 @@ public class PowerupAbility : MonoBehaviour {
                 spriteRenderer.sprite = Resources.Load<Sprite>("Powerups/PU_Jump");
                 break;
             default:
-                
+
                 break;
         }
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 }

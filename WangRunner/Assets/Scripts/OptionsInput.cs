@@ -2,32 +2,35 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class OptionsInput : MonoBehaviour {
+public class OptionsInput : MonoBehaviour
+{
 
     Slider musicSlider;
     GameObject messageBox;
-	void Start () {
+    void Start()
+    {
         messageBox = GameObject.Find("MessageBox");
         messageBox.SetActive(false);
         musicSlider = GameObject.Find("Music Slider").GetComponent<Slider>();
         AudioListener.volume = PlayerPrefs.GetFloat("musicVolume", 1);
         Debug.Log(PlayerPrefs.GetFloat("musicVolume", 100));
     }
-	
-	
-	void Update () { 
-		musicSlider.value=AudioListener.volume;
-	}
+
+
+    void Update()
+    {
+        musicSlider.value = AudioListener.volume;
+    }
 
     public void ShowMessageBox()
     {
         messageBox.SetActive(true);
     }
 
-    
+
     public void HideMessageBox()
     {
-         messageBox.SetActive(false);
+        messageBox.SetActive(false);
     }
 
     public void ResetData()
@@ -44,40 +47,52 @@ public class OptionsInput : MonoBehaviour {
 
         PlayerPrefs.SetInt("FirstTimePlaying", 0);
 
+
+
+        for (int i = 0; i < 3; i++)
+        {
+            PlayerPrefs.SetInt(string.Format("HighScoreDistance{0}", i + 1), 0);
+            PlayerPrefs.SetInt(string.Format("HighScoreCoins{0}", i + 1), 0);
+            PlayerPrefs.SetInt(string.Format("HighScorePowerups{0}", i + 1), 0);
+        }
+
+
+
         HideMessageBox();
     }
 
-	public void PressedCreditsButton()
-	{
-        
-		Application.LoadLevel ("CreditsScreen");
-	}
+    public void PressedCreditsButton()
+    {
 
-	public void PressedBackButton()
-	{
-		Application.LoadLevel ("Main Menu");
-	}
+        Application.LoadLevel("CreditsScreen");
+    }
 
-	public void DecVolume()
-	{
-			if (AudioListener.volume > 0) {
-			AudioListener.volume = (AudioListener.volume - 0.1F);
-			PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
-		}
-	}
+    public void PressedBackButton()
+    {
+        Application.LoadLevel("Main Menu");
+    }
 
-	public void IncVolume()
-	{
-		if (AudioListener.volume < 1) 
-		{
-			AudioListener.volume = (AudioListener.volume + 0.1F);
-			PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
-		}
-	}
+    public void DecVolume()
+    {
+        if (AudioListener.volume > 0)
+        {
+            AudioListener.volume = (AudioListener.volume - 0.1F);
+            PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
+        }
+    }
 
-	public void SliderChange()
-	{
-		AudioListener.volume = musicSlider.value;
+    public void IncVolume()
+    {
+        if (AudioListener.volume < 1)
+        {
+            AudioListener.volume = (AudioListener.volume + 0.1F);
+            PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
+        }
+    }
+
+    public void SliderChange()
+    {
+        AudioListener.volume = musicSlider.value;
         PlayerPrefs.SetFloat("musicVolume", AudioListener.volume + .01f);
     }
 

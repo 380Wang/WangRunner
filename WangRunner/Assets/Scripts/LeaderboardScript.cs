@@ -25,9 +25,9 @@ public class LeaderboardScript : MonoBehaviour
 
         for(int i = 0; i < distanceTexts.Length; i++)
         {
-            distanceTexts[i].text = string.Format("1st: {0}m", highScoreDistances[i]);
-            coinsTexts[i].text = string.Format("1st: {0} coins", highScoreCoins[i]);
-            powerupsTexts[i].text = string.Format("1st: {0} powerups", highScorePowerups[i]);
+            distanceTexts[i].text = string.Format("{1}: {0}m", highScoreDistances[i], (i == 0 ? "1st" : (i == 1 ? "2nd" : "3rd")));
+            coinsTexts[i].text = string.Format("{1}: {0} coins", highScoreCoins[i], (i == 0 ? "1st" : (i == 1 ? "2nd" : "3rd")));
+            powerupsTexts[i].text = string.Format("{1}: {0} powerups", highScorePowerups[i], (i == 0 ? "1st" : (i == 1 ? "2nd" : "3rd")));
         }
     }
 

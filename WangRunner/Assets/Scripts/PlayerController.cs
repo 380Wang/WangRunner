@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     public float glideFallFactor = 1.0f;
     public float uppercutForce = 12.0f;
     public float uppercutDuration = 3.0f;
+    public  DeathScript death;
+    private int collectedPowerups = 0;
 
     public Transform groundCheckTransformLeft;
     public Transform groundCheckTransformRight;
@@ -23,6 +25,7 @@ public class PlayerController : MonoBehaviour
     public Text debuggerOutput;
     public JumpAbility CurrentJump = JumpAbility.Jump;
     public ActionAbility CurrentAction = ActionAbility.Slide;
+    public bool Tutorial;
 
     private bool grounded = false;
     private bool lastGrounded = false;
@@ -48,6 +51,7 @@ public class PlayerController : MonoBehaviour
     private float dropDistance;
     private bool slideFix = true;   // Don't worry about it...
     public bool isDead = false;
+    private int collectedCoins = 0;
 
 
 	public AudioClip coinFx;
@@ -79,6 +83,10 @@ public class PlayerController : MonoBehaviour
     {
         player = GetComponent<Rigidbody2D>();
         killzone = GameObject.Find("Killzone");
+        Time.timeScale = 1;
+        collectedCoins = 0;
+        collectedPowerups = 0;
+
     }
 
     // Update is called once per frame
@@ -111,7 +119,7 @@ public class PlayerController : MonoBehaviour
                 //if (DEBUG_MOBILE) debuggerOutput.text = "tCount <= 0";
             }
         }
-        if (Application.platform == RuntimePlatform.WindowsEditor)
+        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
         {
             //== FOR DESKTOP: CONTROLS ==//
             if (Input.GetKey(KeyCode.RightArrow))
@@ -500,14 +508,13 @@ public class PlayerController : MonoBehaviour
         if (collider.CompareTag("Powerup"))
         {
             UpdatePowerup(collider);
+            collectedPowerups++;
         }
         
         if (collider.CompareTag("Coin"))
         {
             Destroy(collider.gameObject);
-			int currentCoins = PlayerPrefs.GetInt ("CurrentCoins");
-			currentCoins++;
-			PlayerPrefs.SetInt("CurrentCoins", currentCoins);
+            collectedCoins++;
 			SoundManager.instance.PlaySingle(coinFx);
         }
 
@@ -533,9 +540,16 @@ public class PlayerController : MonoBehaviour
 
     void KillPlayer()
     {
-        isDead = true;
-        Debug.Log("Player has died!");
-        player.rotation = -90;
+        if (!Tutorial && !isDead)
+        {
+            isDead = true;
+            Debug.Log("Player has died!");
+            player.rotation = -90;
+            Time.timeScale = 0;
+            death.Died(collectedCoins, ((int)transform.position.x + 3), collectedPowerups);
+            
+        }
+
     }
 
     void Reset()
@@ -544,6 +558,7 @@ public class PlayerController : MonoBehaviour
         if (!isDead && boostCooldown <= 0 && diveKickCooldown <= 0)
         {
             player.rotation = 0;
+
             Run();
         }
     }
@@ -626,7 +641,7 @@ public class PlayerController : MonoBehaviour
                 isLeftPressed = isRightPressed = false;
             }
         }
-        if (Application.platform == RuntimePlatform.WindowsEditor)
+        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
         {
             if (!Input.GetKey(KeyCode.LeftArrow))
             {
@@ -731,7 +746,11 @@ public class PlayerController : MonoBehaviour
                 new Rect(popupPosX + (0.08f * popupWidth), popupPosY + (0.1f * Screen.height), textDimensions.x, textDimensions.y),
                 "Total Coins:"
                 );
-            string coinsCollected = PlayerPrefs.GetInt("CurrentCoins").ToString();
+            string coinsCollected = collectedCoins.ToString();
+            
+
+            
+
             textDimensions = GUI.skin.label.CalcSize(new GUIContent(coinsCollected));
             GUI.Label(
                 new Rect(popupPosX + 0.8f * popupWidth, popupPosY + (0.1f * Screen.height), textDimensions.x, textDimensions.y),
@@ -757,6 +776,7 @@ public class PlayerController : MonoBehaviour
                 "Try Again"
                 ))  // if
             {
+
                 Application.LoadLevel("MainGame");
             }
 
