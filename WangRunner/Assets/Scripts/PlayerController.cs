@@ -363,6 +363,7 @@ public class PlayerController : MonoBehaviour
         {
             isFirstTouch = false;
             Jump();
+			SoundManager.instance.PlaySingle(attackFx);
             //Debug.Log("Dive...");
         }
         //did we just tap the screen for the second time?
@@ -394,6 +395,7 @@ public class PlayerController : MonoBehaviour
 
     void Glide()
     {
+
         if (isFirstTouch && ScreenIsTapped())
         {
             isFirstTouch = false;
@@ -404,6 +406,7 @@ public class PlayerController : MonoBehaviour
             Vector2 glideVelo = player.velocity;
             glideVelo.y = -0.2f * glideFallFactor;
             player.velocity = glideVelo;
+
 
 	
         }
@@ -422,6 +425,7 @@ public class PlayerController : MonoBehaviour
             currPos.y -= dropDistance;
 
             player.position = currPos;
+			SoundManager.instance.PlaySingle(slideFx);
         }
         player.rotation = 90;
         //actionHappening = true;
@@ -456,6 +460,7 @@ public class PlayerController : MonoBehaviour
         {
             //boostWasted = true;
             boostCooldown = 0.02f * uppercutDuration;
+			SoundManager.instance.PlaySingle(attackFx);
         }
     }
 
@@ -484,6 +489,7 @@ public class PlayerController : MonoBehaviour
     void ActivateJetpack()
     {
         player.AddForce(new Vector2(0, jetpackForce));
+
     }
 
     void OnTriggerEnter2D(Collider2D collider)
@@ -497,6 +503,10 @@ public class PlayerController : MonoBehaviour
         if (collider.CompareTag("Coin"))
         {
             Destroy(collider.gameObject);
+			int currentCoins = PlayerPrefs.GetInt ("CurrentCoins");
+			currentCoins++;
+			PlayerPrefs.SetInt("CurrentCoins", currentCoins);
+			SoundManager.instance.PlaySingle(coinFx);
         }
     }
 
