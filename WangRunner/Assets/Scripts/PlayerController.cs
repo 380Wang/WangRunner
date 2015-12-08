@@ -47,6 +47,7 @@ public class PlayerController : MonoBehaviour
     private bool actionHappening = false;
     private float dropDistance;
     private bool slideFix = true;   // Don't worry about it...
+    public bool isDead = false;
 
 
 	public AudioClip coinFx;
@@ -146,6 +147,7 @@ public class PlayerController : MonoBehaviour
         TrackTouch();
         UpdateAbilityStatus();
         UpdateGroundedStatus();
+        //UpdateDeadState();
     }
 
     /**
@@ -508,6 +510,11 @@ public class PlayerController : MonoBehaviour
 			PlayerPrefs.SetInt("CurrentCoins", currentCoins);
 			SoundManager.instance.PlaySingle(coinFx);
         }
+
+        if (collider.CompareTag("Obstacle"))
+        {
+            KillPlayer();
+        }
     }
 
     void UpdatePowerup(Collider2D powerup)
@@ -524,10 +531,17 @@ public class PlayerController : MonoBehaviour
         Destroy(powerup.gameObject);
     }
 
+    void KillPlayer()
+    {
+        isDead = true;
+        Debug.Log("Player has died!");
+        player.rotation = -90;
+    }
+
     void Reset()
     {
         //Debug.Log("Reset");
-        if (boostCooldown <= 0 && diveKickCooldown <= 0)
+        if (!isDead && boostCooldown <= 0 && diveKickCooldown <= 0)
         {
             player.rotation = 0;
             Run();
@@ -539,9 +553,12 @@ public class PlayerController : MonoBehaviour
      **/
     void Run()
     {
-        Vector2 newVelo = player.velocity;
-        newVelo.x = movementSpeed;
-        player.velocity = newVelo;
+        if (!isDead)
+        {
+            Vector2 newVelo = player.velocity;
+            newVelo.x = movementSpeed;
+            player.velocity = newVelo;
+        }
     }
 
     /**
@@ -630,7 +647,7 @@ public class PlayerController : MonoBehaviour
     private void RegisterTouch(bool touch)
     {
         bool DEBUG_T = false;
-        if (touch == LEFT)
+        if (!isDead && touch == LEFT)
         {
             if(CurrentJump != JumpAbility.Jetpack) {
             isLeftPressed = true;
@@ -659,7 +676,7 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-        else
+        else if(!isDead && touch == RIGHT)
         {
             isRightPressed = true;
             if (DEBUG_T) Debug.Log("" + Time.time + ": " + CurrentJump);
@@ -697,6 +714,53 @@ public class PlayerController : MonoBehaviour
     {
         if (currentScore != null)
             UpdateScore();
+
+        if (isDead)
+        {
+            // Pop up a menu
+            Vector2 textDimensions;
+            float popupWidth = 0.5f * Screen.width;
+            float popupHeight = 0.5f * Screen.height;
+            float popupPosX = 0.25f * Screen.width;
+            float popupPosY = 0.25f * Screen.height;
+            GUI.Box(new Rect(popupPosX, popupPosY, popupWidth, popupHeight), "You have died!");
+
+            // Show amount of coins collected
+            textDimensions = GUI.skin.label.CalcSize(new GUIContent("Total Coins:"));
+            GUI.Label(
+                new Rect(popupPosX + (0.08f * popupWidth), popupPosY + (0.1f * Screen.height), textDimensions.x, textDimensions.y),
+                "Total Coins:"
+                );
+            string coinsCollected = PlayerPrefs.GetInt("CurrentCoins").ToString();
+            textDimensions = GUI.skin.label.CalcSize(new GUIContent(coinsCollected));
+            GUI.Label(
+                new Rect(popupPosX + 0.8f * popupWidth, popupPosY + (0.1f * Screen.height), textDimensions.x, textDimensions.y),
+                coinsCollected
+                );
+
+            // 'Main Menu' Button
+            textDimensions = GUI.skin.label.CalcSize(new GUIContent("Main Menu"));
+            if (GUI.Button(
+                new Rect(popupPosX + (0.08f * popupWidth), popupPosY + 0.8f * popupHeight,
+                    textDimensions.x + 0.06f*Screen.width, textDimensions.y),
+                "Main Menu"
+                ))  // if
+            {
+                Application.LoadLevel("Main Menu");
+            }
+
+            // 'Play Again' Button
+            textDimensions = GUI.skin.label.CalcSize(new GUIContent("Try Again"));
+            if (GUI.Button(
+                new Rect(popupPosX + (0.6f * popupWidth), popupPosY + 0.8f * popupHeight,
+                textDimensions.x + 0.06f*Screen.width, textDimensions.y),
+                "Try Again"
+                ))  // if
+            {
+                Application.LoadLevel("MainGame");
+            }
+
+        }
     }
 
     void UpdateScore()
