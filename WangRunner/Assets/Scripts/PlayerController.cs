@@ -5,6 +5,12 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
+    public enum AnimationState
+    {
+        Running = 0,
+        Jumping = 1,
+        Sliding = 2,
+    }
     public float boostForce = 6.0f;
     public float boostDuration = 3.0f;
     public float diveKickForce = 6.0f;
@@ -63,6 +69,8 @@ public class PlayerController : MonoBehaviour
 	public AudioClip boostFx;
 	public AudioClip gliderFx;
 
+    Animator animator;
+
 
 
 
@@ -86,7 +94,8 @@ public class PlayerController : MonoBehaviour
         Time.timeScale = 1;
         collectedCoins = 0;
         collectedPowerups = 0;
-
+        animator = GetComponent<Animator>();
+        
     }
 
     // Update is called once per frame
@@ -155,7 +164,24 @@ public class PlayerController : MonoBehaviour
         TrackTouch();
         UpdateAbilityStatus();
         UpdateGroundedStatus();
+        if (grounded && !isSliding)
+        {
+            Debug.Log("Should be running");
+            animator.SetInteger("AnimationState", (int)AnimationState.Running);
+           
+        }
+        else if (isJumping)
+        {
+            Debug.Log("Should be Jumping");
+            animator.SetInteger("AnimationState", (int)AnimationState.Jumping);
+        }
+        else if (isSliding)
+        {
+            Debug.Log("Should be Sliding    ");
+            animator.SetInteger("AnimationState", (int)AnimationState.Sliding);
+        }
         //UpdateDeadState();
+        
     }
 
     /**
@@ -226,6 +252,9 @@ public class PlayerController : MonoBehaviour
             {
                 case ActionAbility.Slide:
                     isSliding = false;
+
+
+
                     break;
                 default:
                     break;
@@ -303,12 +332,14 @@ public class PlayerController : MonoBehaviour
         grounded = Physics2D.OverlapCircle(groundCheckTransformLeft.position, 0.01f, groundCheckLayerMask) || Physics2D.OverlapCircle(groundCheckTransformRight.position, 0.01f, groundCheckLayerMask);
         if(grounded)
         {
+            
             isFirstTouch = true;    // Should always be true upon grounded, so he can jump
             if (CurrentJump == JumpAbility.DiveKick && !isLeftPressed) player.rotation = 0;
             boostWasted = false;
             diveKickWasted = false;
             //Debug.Log("boostWasted = false");
         }
+        
 
         if (Time.time % 1 == 0)
         {
