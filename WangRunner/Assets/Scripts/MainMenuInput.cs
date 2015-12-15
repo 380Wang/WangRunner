@@ -29,5 +29,9 @@ public class MainMenuInput : MonoBehaviour {
     public void LeaderboardsPressed(){
         Application.LoadLevel("LeaderboardScreen");
     }
+    
+    public void StoryPressed(){
+        Application.LoadLevel("StoryScene");
+    }
 	
 }

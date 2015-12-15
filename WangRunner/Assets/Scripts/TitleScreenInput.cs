@@ -45,8 +45,17 @@ public class TitleScreenInput : MonoBehaviour
 
     public void TransitionToMainMenu()
     {
-        Application.LoadLevel("Main Menu");
-        PlayerPrefs.SetInt("FirstTimePlaying", 1);
+        if(PlayerPrefs.GetInt("FirstTimePlaying") == 0)
+        {
+            Application.LoadLevel("StoryScene");
+
+            PlayerPrefs.SetInt("FirstTimePlaying", 1);
+        }
+        else
+        {
+            Application.LoadLevel("Main Menu");
+        }
+        
     }
 
     void Update()

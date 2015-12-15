@@ -174,14 +174,16 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Should be Jumping");
             animator.SetInteger("AnimationState", (int)AnimationState.Jumping);
+
         }
         else if (isSliding)
         {
             Debug.Log("Should be Sliding    ");
-            animator.SetInteger("AnimationState", (int)AnimationState.Sliding);
+            animator.SetInteger("AnimationState", (int)AnimationState.Jumping);
         }
         //UpdateDeadState();
-        
+
+
     }
 
     /**
