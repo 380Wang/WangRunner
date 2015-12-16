@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 8e15c19d549fae842b152a0643e831fd
-timeCreated: 1450202587
+timeCreated: 1450227021
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -8,6 +8,7 @@ TextureImporter:
     21300002: alienBlue_1
     21300004: AlienJumping
     21300006: AlienCrouching
+    21300008: AlienSad
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -91,6 +92,16 @@ TextureImporter:
         y: 156
         width: 67
         height: 71
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AlienSad
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 229
+        width: 66
+        height: 90
       alignment: 0
       pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}
